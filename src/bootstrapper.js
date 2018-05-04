@@ -24,7 +24,6 @@ export class Bootstrapper
 		loadingView = new LoadingView();
 
 		// stage.getStage().addChild(loadingView);
-
 		stage.getStage().addChild(new RoomView());
 	}
 
