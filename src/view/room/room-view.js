@@ -1,5 +1,6 @@
 import { withInstance } from "../../core/pixi-utils.js";
 import { Bootstrapper } from "../../bootstrapper.js";
+import { simpleDraggable } from "../../core/pixi-utils.js";
 
 const tileHeight = 32;
 const tileWidth = 64;
@@ -92,19 +93,108 @@ x1111xx1111xx000000
 xxxxxxxxxxxxxxxxxxx
 `);
 
-export class RoomView extends PIXI.Graphics
+heightMaps.push(`
+xxxxxxxxxxxxxxxxxxxxxx
+x22222222222222222222x
+x22222222222222222222x
+x22222222222222222222x
+x22222222222222222222x
+x22222222222222222222x
+x22222222222222222222x
+x22222222222222222222x
+x000x11xxxxxxxx11x000x
+x00000000000000000000x
+x00000000000000000000x
+x00000000000000000000x
+x00000000000000000000x
+x00000000000000000000x
+x00000000000000000000x
+x00000000000000000000x
+x00000000000000000000x
+x00000000000000000000x
+xxxxxxxxxxxxxxxxxxxxxx
+`);
+
+heightMaps.push(`
+xxxxxxxxxxxxxxxxxxx
+xxxxxxx222222222222
+xxxxxxx222222222222
+xxxxxxx222222222222
+xxxxxxx222222222222
+xxxxxxx222222222222
+xxxxxxx222222222222
+xxxxxxx222222222222
+xxxxxxx111111111111
+x222221111111111111
+x222221111111111111
+x222221111111111111
+x222221111111111111
+x222221111111111111
+x222221111111111111
+x222221111111111111
+x222221111111111111
+x2222xx111111111111
+x2222xx000000000000
+x2222xx000000000000
+x2222xx000000000000
+x2222xx000000000000
+x2222xx000000000000
+22222xx000000000000
+x2222xx000000000000
+xxxxxxxxxxxxxxxxxxx
+`);
+
+heightMaps.push(`
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+x222222222x000000000000000000000000xxxx
+x222222222x000000000000000000000000xxxx
+x222222222x000000000000000000000000xxxx
+x222222222x000000000000000000000000xxxx
+x222222222x000000000000000000000000xxxx
+x222222222x000000000000000000000000xxxx
+x222222222x000000000000000000000000xxxx
+x222222222x000000000000000000000000xxxx
+x222222222x00000000xxxxxxxx00000000xxxx
+x11xxxxxxxx00000000xxxxxxxx00000000xxxx
+x00x000000000000000xxxxxxxx00000000xxxx
+x00x000000000000000xxxxxxxx00000000xxxx
+x000000000000000000xxxxxxxx00000000xxxx
+x000000000000000000xxxxxxxx00000000xxxx
+0000000000000000000xxxxxxxx00000000xxxx
+x000000000000000000xxxxxxxx00000000xxxx
+x00x000000000000000xxxxxxxx00000000xxxx
+x00x000000000000000xxxxxxxx00000000xxxx
+x00xxxxxxxxxxxxxxxxxxxxxxxx00000000xxxx
+x00xxxxxxxxxxxxxxxxxxxxxxxx00000000xxxx
+x00x0000000000000000000000000000000xxxx
+x00x0000000000000000000000000000000xxxx
+x0000000000000000000000000000000000xxxx
+x0000000000000000000000000000000000xxxx
+x0000000000000000000000000000000000xxxx
+x0000000000000000000000000000000000xxxx
+x00x0000000000000000000000000000000xxxx
+x00x0000000000000000000000000000000xxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+`);
+
+export class RoomView extends PIXI.Container
 {
 
 	constructor()
 	{
 		super();
 
-		this.prepareHeightmap(heightMaps[1]);
+		this.current = 0;
 
-		// this.scale.x = 2;
-		// this.scale.y = 2;
+		simpleDraggable(this);
+		this.on("click", () => this.prepareHeightmap(heightMaps[++this.current % heightMaps.length]));
 
-		Bootstrapper.getStage().getTicker().add(delta => this.onTick(delta));
+		this.prepareHeightmap(heightMaps[this.current]);
+
+		this.scale.x = 1;
+		this.scale.y = 1;
 	}
 
 	prepareHeightmap(heightmap)
@@ -121,9 +211,6 @@ export class RoomView extends PIXI.Graphics
 			return;
 
 		let tiles = [];
-
-		let columnCount = rows[0].length;
-		let rowCount = rows.length;
 
 		for (let row = 0; row < rows.length; row++)
 		{
@@ -155,7 +242,6 @@ export class RoomView extends PIXI.Graphics
 			}
 		}
 
-		// Re-center tiles.
 		if (tiles.length > 0)
 		{
 			let xred = tiles.reduce((acc, cur) => acc.x < cur.x ? acc : cur).x;
@@ -168,15 +254,8 @@ export class RoomView extends PIXI.Graphics
 			});
 		}
 
-		// this.beginFill(0xABCDEF);
-		// this.drawRect(0, 0, this.width, this.height);
-		// this.endFill();
-	}
-
-	onTick(delta)
-	{
-		this.x = Math.floor((Bootstrapper.getStage().width / 2) - (this.width / 2));
-		this.y = Math.floor((Bootstrapper.getStage().height / 2) - (this.height / 2));
+		this.position.x = Math.floor((Bootstrapper.getStage().width / 2) - (this.width / 2));
+		this.position.y = Math.floor((Bootstrapper.getStage().height / 2) - (this.height / 2));
 	}
 
 }
@@ -188,8 +267,11 @@ class TileBase extends PIXI.Graphics
 	{
 		super();
 
-		this.cacheBitmap = true;
+		this.interactive = true;
 		this.thickness = 8;
+
+		this.on("mouseenter", () => this.position.y -= 10);
+		this.on("mouseleave", () => this.position.y += 10);
 	}
 
 }
@@ -257,6 +339,8 @@ class Tile extends TileBase
 			new PIXI.Point(tileWidth / 2, tileHeight),
 			new PIXI.Point(0, tileHeight / 2)
 		];
+
+		this.hitArea = new PIXI.Polygon(...points);
 
 		drawTile(this, points, this.thickness);
 	}
