@@ -1,9 +1,10 @@
-import { withInstance } from "../../core/pixi-utils.js";
+import { simpleDraggable, withInstance } from "../../core/pixi-utils.js";
 import { Bootstrapper } from "../../bootstrapper.js";
-import { simpleDraggable } from "../../core/pixi-utils.js";
 
 const tileHeight = 32;
+const tileHeightHalf = tileHeight / 2;
 const tileWidth = 64;
+const tileWidthHalf = tileWidth / 2;
 
 let heightMaps = [];
 
@@ -53,13 +54,21 @@ function getTileHeight(char)
 	if (char === "x")
 		return null;
 
-	return ["1", "2", "3", "4", "5", "6", "7", "8", "9"].indexOf(char);
+	return ["1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"].indexOf(char);
 }
 
 heightMaps.push(`
 xxxxx
 x000x
 x000x
+x000x
+xxxxx
+`);
+
+heightMaps.push(`
+xxxxx
+x110x
+x110x
 x000x
 xxxxx
 `);
@@ -182,19 +191,28 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 export class RoomView extends PIXI.Container
 {
 
+	get roomScale()
+	{
+		return this.scale.x;
+	}
+
+	set roomScale(value)
+	{
+		this.scale.x = value;
+		this.scale.y = value;
+	}
+
 	constructor()
 	{
 		super();
 
-		this.current = 0;
-
 		simpleDraggable(this);
-		this.on("click", () => this.prepareHeightmap(heightMaps[++this.current % heightMaps.length]));
+		this.prepareHeightmap(heightMaps[4]);
 
-		this.prepareHeightmap(heightMaps[this.current]);
+		this.roomScale = 1;
+		this.tileCursor = new TileCursor();
 
-		this.scale.x = 1;
-		this.scale.y = 1;
+		this.on("pointerout", () => this.onTileLeave());
 	}
 
 	prepareHeightmap(heightmap)
@@ -226,18 +244,24 @@ export class RoomView extends PIXI.Container
 				let tileSouthEast = getTile(rows, row, column + 1);
 				let tileSouthWest = getTile(rows, row + 1, column);
 
-				if (tileSouthEast !== null && Math.abs(t - tileSouthEast) === 1)
+				if (tileSouthEast !== null && tileSouthWest !== null && Math.abs(t - tileSouthEast) === 1 && Math.abs(t - tileSouthWest) === 1)
+					implementation = StairsSouth;
+				else if (tileSouthEast !== null && Math.abs(t - tileSouthEast) === 1)
 					implementation = StairsSouthEast;
-
-				if (tileSouthWest !== null && Math.abs(t - tileSouthWest) === 1)
+				else if (tileSouthWest !== null && Math.abs(t - tileSouthWest) === 1)
 					implementation = StairsSouthWest;
 
 				this.addChild(withInstance(new implementation(), tile =>
 				{
 					tiles.push(tile);
 
-					tile.x = (column - row) * 32;
-					tile.y = (column + row) * 16 - (t * 32);
+					tile.row = row;
+					tile.column = column;
+
+					tile.on("hover", evt => this.onTileHover(evt));
+
+					tile.x = (column - row) * tileWidthHalf;
+					tile.y = (column + row) * tileHeightHalf - (t * tileWidthHalf);
 				}));
 			}
 		}
@@ -258,6 +282,17 @@ export class RoomView extends PIXI.Container
 		this.position.y = Math.floor((Bootstrapper.getStage().height / 2) - (this.height / 2));
 	}
 
+	onTileHover(evt)
+	{
+		this.addChild(this.tileCursor);
+		this.tileCursor.hover(evt.row, evt.column, evt.x, evt.y, evt.tile);
+	}
+
+	onTileLeave()
+	{
+		this.removeChild(this.tileCursor);
+	}
+
 }
 
 class TileBase extends PIXI.Graphics
@@ -267,11 +302,98 @@ class TileBase extends PIXI.Graphics
 	{
 		super();
 
+		this.row = 0;
+		this.column = 0;
+
 		this.interactive = true;
 		this.thickness = 8;
 
-		this.on("mouseenter", () => this.position.y -= 10);
-		this.on("mouseleave", () => this.position.y += 10);
+		this.on("pointerover", () => this.onMouseOver());
+		this.on("pointerout", () => this.onMouseOut());
+	}
+
+	onMouseOver()
+	{
+		this.emit("hover", {
+			row: this.row,
+			column: this.column,
+			x: this.x,
+			y: this.y,
+			width: this.width,
+			height: this.height,
+			tile: this
+		});
+	}
+
+	onMouseOut()
+	{
+		this.emit("leave", {
+			row: this.row,
+			column: this.column,
+			x: this.x,
+			y: this.y,
+			width: this.width,
+			height: this.height,
+			tile: this
+		});
+	}
+
+}
+
+class TileCursor extends PIXI.Graphics
+{
+
+	constructor()
+	{
+		super();
+
+		const points = [
+			new PIXI.Point(tileWidth / 2, 0),
+			new PIXI.Point(tileWidth, tileHeight / 2),
+			new PIXI.Point(tileWidth / 2, tileHeight),
+			new PIXI.Point(0, tileHeight / 2)
+		];
+
+		this.lineStyle(4, 0xFFFFFF);
+		this.moveTo(points[0].x, points[0].y);
+		this.lineTo(points[1].x, points[1].y);
+		this.lineTo(points[2].x, points[2].y);
+		this.lineTo(points[3].x, points[3].y);
+		this.lineTo(points[0].x, points[0].y);
+		this.endFill();
+
+		this.filters = [
+			withInstance(new PIXI.filters.DropShadowFilter(), shadow =>
+			{
+				shadow.color = 0x000000;
+				shadow.alpha = 0.2;
+				shadow.blur = 0;
+				shadow.distance = 2;
+				shadow.rotation = 90;
+			})
+		];
+	}
+
+	hover(row, column, x, y, tile)
+	{
+		let nx = x;
+		let ny = y;
+
+		if (!(tile instanceof Tile))
+			ny += tileHeightHalf;
+
+		this.position.x = nx;
+		this.position.y = ny - 2;
+	}
+
+}
+
+class StairsSouth extends TileBase
+{
+
+	constructor()
+	{
+		super();
 	}
 
 }
@@ -282,6 +404,8 @@ class StairsSouthEast extends TileBase
 	constructor()
 	{
 		super();
+
+		const allPoints = [];
 
 		for (let step = 0; step < 4; step++)
 		{
@@ -294,6 +418,8 @@ class StairsSouthEast extends TileBase
 				new PIXI.Point((tileWidth / 2) - 24 + ax, 20 + ay),
 				new PIXI.Point(ax, (tileHeight / 2) + ay)
 			];
+
+			allPoints.push(...points);
 
 			drawTile(this, points, this.thickness);
 		}
@@ -339,8 +465,6 @@ class Tile extends TileBase
 			new PIXI.Point(tileWidth / 2, tileHeight),
 			new PIXI.Point(0, tileHeight / 2)
 		];
-
-		this.hitArea = new PIXI.Polygon(...points);
 
 		drawTile(this, points, this.thickness);
 	}

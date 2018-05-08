@@ -9,7 +9,7 @@ export class Stage
 	{
 		this.stage = document.querySelector(stageElement);
 
-		this.dpi = window.devicePixelRatio;
+		this.dpi = 1; // window.devicePixelRatio;
 		this.height = window.innerHeight / this.dpi;
 		this.width = window.innerWidth / this.dpi;
 
