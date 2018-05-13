@@ -1,9 +1,7 @@
-import { Bootstrapper } from "../bootstrapper.js";
-import { Translator } from "../core/i18n/translator.js";
+import { application } from "../bootstrapper.js";
+import { I18nManager } from "../core/i18n/i18n.js";
 
-const resourceLogo = "/resource/image/logo-2x.png";
-const resourceHotel = "/resource/image/loading-view/hotel.png";
-const resourceSkyline = "/resource/image/loading-view/skyline.png";
+const resourceLogo = "/resource/image/logo.png";
 
 class LoadingBar extends PIXI.Graphics
 {
@@ -12,24 +10,30 @@ class LoadingBar extends PIXI.Graphics
 	{
 		super();
 
+		this.barColor = 0x888888;
+		this.barHeight = 12;
+		this.barThickness = 2;
+		this.barWidth = 300;
 		this.percentage = 0;
 
-		Bootstrapper.getStage().getTicker().add(delta => this.onTick(delta));
+		application.display.ticker.add(delta => this.onTick(delta));
 	}
 
 	onTick()
 	{
 		this.clear();
 
-		this.beginFill(0x25b8ee);
-		this.lineStyle(1, 0x006699);
-		this.drawRect(0, 0, 203, 23);
+		this.beginFill(this.barColor);
+		this.drawRect(0, 0, Math.round(this.percentage / 100 * this.barWidth), this.barHeight);
 		this.endFill();
 
-		this.beginFill(0x006699);
-		this.lineStyle(0);
-		this.drawRect(1, 2, Math.round(this.percentage / 100 * 200), 20);
-		this.endFill();
+		this.lineStyle(this.barThickness, this.barColor);
+
+		this.moveTo(-this.barThickness, -this.barThickness);
+		this.lineTo(this.barWidth + this.barThickness, -this.barThickness);
+		this.lineTo(this.barWidth + this.barThickness, this.barHeight + this.barThickness);
+		this.lineTo(-this.barThickness, this.barHeight + this.barThickness);
+		this.lineTo(-this.barThickness, -this.barThickness);
 	}
 
 }
@@ -44,23 +48,22 @@ export class LoadingView extends PIXI.Graphics
 
 	set percentage(value)
 	{
-		this.loadingBar.percentage = value;
+		this.loadingBar.percentage = Math.round(value);
 	}
 
 	constructor()
 	{
 		super();
 
+		this.loader = new PIXI.loaders.Loader();
 		this.loadingBar = new LoadingBar();
 
 		this.logo = null;
-		this.hotel = null;
-		this.skyline = null;
 
 		this.init();
 		this.loadResources();
 
-		Bootstrapper.getStage().getTicker().add(delta => this.onTick(delta));
+		application.display.ticker.add(delta => this.onTick(delta));
 	}
 
 	init()
@@ -68,7 +71,7 @@ export class LoadingView extends PIXI.Graphics
 		const style = new PIXI.TextStyle({
 			align: "center",
 			fontFamily: "Segoe UI",
-			fontSize: 16,
+			fontSize: 13,
 			fill: "white",
 			wordWrap: true,
 			wordWrapWidth: 360
@@ -79,65 +82,53 @@ export class LoadingView extends PIXI.Graphics
 
 	loadResources()
 	{
-		Bootstrapper.getLoader()
+		this.loader
 			.add(resourceLogo)
-			.add(resourceHotel)
-			.add(resourceSkyline)
-			.load(() => this.onResourcesLoaded());
+			.load(() => this.onResourcesLoaded())
 	}
 
 	onResourcesLoaded()
 	{
-		this.logo = new PIXI.Sprite(Bootstrapper.getResource(resourceLogo).texture);
-		this.hotel = new PIXI.Sprite(Bootstrapper.getResource(resourceHotel).texture);
-		this.skyline = new PIXI.extras.TilingSprite(Bootstrapper.getResource(resourceSkyline).texture);
+		this.logo = new PIXI.Sprite(application.getResource(resourceLogo, this.loader).texture);
 
-		this.addChild(this.skyline);
-		this.addChild(this.hotel);
 		this.addChild(this.logo);
 
 		this.addChild(this.loadingBar);
 		this.addChild(this.text);
+
+		this.emit("loader-ready");
+
+		application.loader.on("progress", state => this.percentage = state.progress);
 	}
 
 	onTick()
 	{
-		const percentage = this.percentage = (this.percentage + 1) % 100;
+		const percentage = this.percentage;
 
 		this.clear();
 
-		this.beginFill(0x25b8ee);
-		this.drawRect(0, 0, window.innerWidth, window.innerHeight);
+		const height = application.display.height;
+		const width = application.display.width;
+
+		this.beginFill(0x0);
+		this.drawRect(0, 0, width, height);
 		this.endFill();
 
-		this.loadingBar.position.x = Math.round((Bootstrapper.getStage().width / 2) - (this.loadingBar.width / 2));
-		this.loadingBar.position.y = Math.round((Bootstrapper.getStage().height / 2) - (this.loadingBar.height / 2) + 102);
+		this.loadingBar.position.x = Math.round((width / 2) - (this.loadingBar.width / 2));
+		this.loadingBar.position.y = height - (this.loadingBar.height + 91);
 
 		if (this.logo !== null)
 		{
-			this.logo.x = Math.round((Bootstrapper.getStage().width / 2) - (this.logo.width / 2));
-			this.logo.y = Math.round((Bootstrapper.getStage().height / 2) - this.logo.height);
+			this.logo.x = Math.round((width / 2) - (this.logo.width / 2));
+			this.logo.y = Math.round((height / 2) - (this.logo.height / 2));
 		}
 
-		if (this.hotel !== null)
-		{
-			this.hotel.x = Math.floor(-(this.hotel.width / 2));
-			this.hotel.y = Math.floor(window.innerHeight - (this.hotel.width / 2));
-		}
-
-		if (this.skyline !== null)
-		{
-			this.skyline.x = 0;
-			this.skyline.y = window.innerHeight - this.skyline.height;
-			this.skyline.width = window.innerWidth;
-		}
+		this.text.text = application.getManager(I18nManager).getString("loading-view.starting-up", {percentage}, "");
 
 		this.text.position.set(
-			Math.floor((Bootstrapper.getStage().width / 2) - (this.text.width / 2)),
-			Math.floor(Bootstrapper.getStage().height / 2) + 30
+			Math.floor((width / 2) - (this.text.width / 2)),
+			this.loadingBar.position.y - 30
 		);
-
-		this.text.text = Translator.translate("Please wait while David brings your stuff to the topmost floor! (%percentage%%)", {percentage});
 	}
 
 }

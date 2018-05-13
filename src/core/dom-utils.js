@@ -36,3 +36,16 @@ export function removeHtml(element)
 {
 	element.innerHTML = "";
 }
+
+/**
+ * Query Selector All to Array.
+ *
+ * @param selector
+ * @param container
+ *
+ * @returns {Array<Element>}
+ */
+export function querySelectorAllArray(selector, container = document)
+{
+	return [].slice.call(container.querySelectorAll(selector));
+}

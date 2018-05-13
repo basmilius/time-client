@@ -1,26 +1,40 @@
 let simpleDraggableTarget = null;
 
-export function simpleDraggable(target)
+export function setInteractive(target)
 {
 	target.interactive = true;
+}
 
-	target.on("mousedown", function ()
+export function simpleDraggable(target)
+{
+	setInteractive(target);
+
+	let data = null;
+	let pos = null;
+
+	target.on("pointerdown", function (evt)
 	{
+		data = evt.data;
 		simpleDraggableTarget = target;
+		pos = data.getLocalPosition(simpleDraggableTarget);
 	});
 
-	target.on("mouseup", function ()
+	target.on("pointerup", function ()
 	{
+		data = null;
+		pos = null;
 		simpleDraggableTarget = null;
 	});
 
-	target.on("mousemove", function(evt)
+	target.on("pointermove", function ()
 	{
 		if (simpleDraggableTarget === null)
 			return;
 
-		simpleDraggableTarget.position.x += evt.data.originalEvent.movementX;
-		simpleDraggableTarget.position.y += evt.data.originalEvent.movementY;
+		const p = data.getLocalPosition(simpleDraggableTarget.parent);
+
+		simpleDraggableTarget.position.x = p.x - pos.x;
+		simpleDraggableTarget.position.y = p.y - pos.y;
 	});
 }
 

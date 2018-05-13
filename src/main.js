@@ -7,4 +7,17 @@ Object.prototype.forEach = function (callback)
 			callback(this[key], key);
 };
 
-Bootstrapper.init();
+PIXI.Container.prototype.updateLayerOrder = function ()
+{
+	this.children.sort(function (a, b)
+	{
+		a.z = a.z || 0;
+		b.z = b.z || 0;
+
+		return a.z - b.z
+	});
+};
+
+Bootstrapper.init().then(() =>
+{
+});

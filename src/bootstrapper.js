@@ -1,10 +1,10 @@
 import { Logger } from "./core/logging.js";
-import { Stage } from "./stage.js";
-import { LoadingView } from "./view/loading-view.js";
-import { RoomView } from "./view/room/room-view.js";
+import { Application } from "./application.js";
 
-let loadingView = null;
-let stage = null;
+/**
+ * @type {Application}
+ */
+export const application = new Application();
 
 /**
  * Class Bootstrapper.
@@ -15,53 +15,17 @@ export class Bootstrapper
 	/**
 	 * Initializes everything.
 	 */
-	static init()
+	static async init()
 	{
 		Logger.debug("Bootstrapper", "Loading everything..");
 
-		stage = new Stage();
+		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
-		// loadingView = new LoadingView();
+		application.create();
 
-		// stage.getStage().addChild(loadingView);
-		stage.getStage().addChild(new RoomView());
-	}
+		application.on("application-can-run", () => application.run());
 
-	/**
-	 * Gets the loader.
-	 * @returns {PIXI.loader.Loader}
-	 */
-	static getLoader()
-	{
-		return PIXI.loader;
-	}
-
-	/**
-	 * Gets a resource.
-	 * @param {String} resource
-	 * @returns {*}
-	 */
-	static getResource(resource)
-	{
-		return PIXI.loader.resources[resource];
-	}
-
-	/**
-	 * Gets resources.
-	 * @returns {*}
-	 */
-	static getResources()
-	{
-		return PIXI.loader.resources;
-	}
-
-	/**
-	 * Gets the Stage.
-	 * @returns {Stage}
-	 */
-	static getStage()
-	{
-		return stage;
+		await application.initialize();
 	}
 
 }

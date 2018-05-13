@@ -1,0 +1,5 @@
+{
+	"loading-view": {
+		"starting-up": "Wacht even! ${hotel_name.long} is aan het laden.. ${percentage}%"
+	}
+}

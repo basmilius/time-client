@@ -1,5 +1,8 @@
 import { simpleDraggable, withInstance } from "../../core/pixi-utils.js";
-import { Bootstrapper } from "../../bootstrapper.js";
+import { application } from "../../bootstrapper.js";
+
+const debugDoor = false;
+const debugWalls = false;
 
 const tileHeight = 32;
 const tileHeightHalf = tileHeight / 2;
@@ -7,6 +10,13 @@ const tileWidth = 64;
 const tileWidthHalf = tileWidth / 2;
 
 let heightMaps = [];
+
+export const Heading = {
+	NorthEast: 0,
+	NorthWest: 1,
+	SouthEast: 2,
+	SouthWest: 3
+};
 
 function drawTile(g, points, thickness)
 {
@@ -38,6 +48,24 @@ function drawTile(g, points, thickness)
 	}
 }
 
+function getDoorDirection(tiles, row, column)
+{
+	if (!isDoor(tiles, row, column))
+		return null;
+
+	return [Heading.NorthEast, Heading.NorthWest, Heading.SouthEast, Heading.SouthWest][getSurroundings(tiles, row, column).findIndex(t => t !== null)];
+}
+
+function getSurroundings(tiles, row, column)
+{
+	let tileNorthEast = getTile(tiles, row - 1, column);
+	let tileNorthWest = getTile(tiles, row, column - 1);
+	let tileSouthEast = getTile(tiles, row, column + 1);
+	let tileSouthWest = getTile(tiles, row + 1, column);
+
+	return [tileNorthEast, tileNorthWest, tileSouthEast, tileSouthWest];
+}
+
 function getTile(tiles, row, column)
 {
 	if (typeof tiles[row] === "undefined")
@@ -57,8 +85,46 @@ function getTileHeight(char)
 	return ["1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"].indexOf(char);
 }
 
+function isDoor(tiles, row, column)
+{
+	if (getTile(tiles, row, column) === null)
+		return false;
+
+	return getSurroundings(tiles, row, column).filter(t => t !== null).length === 1;
+}
+
+function needsWallC(tiles, row, column)
+{
+	if (isDoor(tiles, row, column))
+		return false;
+
+	let cy = row;
+
+	while (cy > 0)
+		if (getTile(tiles, --cy, column) !== null && !isDoor(tiles, row, cy))
+			return false;
+
+	return !((getTile(tiles, row - 1, column - 1) !== null && !isDoor(tiles, row - 1, column - 1)) || (getTile(tiles, row - 1, column + 1) !== null && !isDoor(tiles, row - 1, column + 1)));
+}
+
+function needsWallR(tiles, row, column)
+{
+	if (isDoor(tiles, row, column))
+		return false;
+
+	let cx = column;
+
+	while (cx > 0)
+		if (getTile(tiles, row, --cx) !== null && !isDoor(tiles, row, cx))
+			return false;
+
+	return !((getTile(tiles, row - 1, column - 1) !== null && !isDoor(tiles, row - 1, column - 1)) || (getTile(tiles, row + 1, column - 1) !== null && !isDoor(tiles, row + 1, column - 1)));
+}
+
 heightMaps.push(`
 xxxxx
+x000x
+0000x
 x000x
 x000x
 x000x
@@ -213,6 +279,8 @@ export class RoomView extends PIXI.Container
 		this.tileCursor = new TileCursor();
 
 		this.on("pointerout", () => this.onTileLeave());
+
+		application.ticker.add(() => this.onTick());
 	}
 
 	prepareHeightmap(heightmap)
@@ -240,9 +308,16 @@ export class RoomView extends PIXI.Container
 					continue;
 
 				let implementation = Tile;
+				let tileNorthEast, tileNorthWest, tileSouthEast, tileSouthWest;
 
-				let tileSouthEast = getTile(rows, row, column + 1);
-				let tileSouthWest = getTile(rows, row + 1, column);
+				[tileNorthEast, tileNorthWest, tileSouthEast, tileSouthWest] = getSurroundings(rows, row, column);
+
+				let door = isDoor(rows, row, column);
+				let doorDirection = door ? getDoorDirection(rows, row, column) : null;
+
+				let wallC = needsWallC(rows, row, column);
+				let wallR = needsWallR(rows, row, column);
+				let wall = wallC || wallR;
 
 				if (tileSouthEast !== null && tileSouthWest !== null && Math.abs(t - tileSouthEast) === 1 && Math.abs(t - tileSouthWest) === 1)
 					implementation = StairsSouth;
@@ -251,6 +326,42 @@ export class RoomView extends PIXI.Container
 				else if (tileSouthWest !== null && Math.abs(t - tileSouthWest) === 1)
 					implementation = StairsSouthWest;
 
+				let x = (column - row) * tileWidthHalf;
+				let y = (column + row) * tileHeightHalf - (t * tileWidthHalf);
+				let z = row << 16 | column;
+
+				if (wall)
+				{
+					let wallImplementations = [];
+
+					if (wallC && wallR)
+					{
+						wallImplementations.push(new WallCorner());
+						wallImplementations.push(new WallColumn(isDoor(rows, row - 1, column)));
+						wallImplementations.push(new WallRow(isDoor(rows, row, column - 1)));
+					}
+					else if (wallC)
+					{
+						wallImplementations.push(new WallColumn(isDoor(rows, row - 1, column)));
+					}
+					else if (wallR)
+					{
+						wallImplementations.push(new WallRow(isDoor(rows, row, column - 1)));
+					}
+
+					for (const wi of wallImplementations)
+					{
+						this.addChild(withInstance(wi, wall =>
+						{
+							tiles.push(wall);
+
+							wall.x = x + tileWidthHalf;
+							wall.y = y;
+							wall.z = z - 1;
+						}));
+					}
+				}
+
 				this.addChild(withInstance(new implementation(), tile =>
 				{
 					tiles.push(tile);
@@ -258,10 +369,22 @@ export class RoomView extends PIXI.Container
 					tile.row = row;
 					tile.column = column;
 
+					if (debugDoor && door)
+						tile.tint = 0xFF0000;
+
+					if (debugWalls)
+						if (wallC && wallR)
+							tile.tint = 0x00FFFF;
+						else if (wallC)
+							tile.tint = 0x00FF00;
+						else if (wallR)
+							tile.tint = 0x0000FF;
+
 					tile.on("hover", evt => this.onTileHover(evt));
 
-					tile.x = (column - row) * tileWidthHalf;
-					tile.y = (column + row) * tileHeightHalf - (t * tileWidthHalf);
+					tile.x = x;
+					tile.y = y;
+					tile.z = z;
 				}));
 			}
 		}
@@ -274,23 +397,133 @@ export class RoomView extends PIXI.Container
 			tiles.forEach(tile =>
 			{
 				tile.x -= xred;
-				tile.y -= yred;
+				// tile.y -= yred;
 			});
 		}
 
-		this.position.x = Math.floor((Bootstrapper.getStage().width / 2) - (this.width / 2));
-		this.position.y = Math.floor((Bootstrapper.getStage().height / 2) - (this.height / 2));
+		this.position.x = Math.floor((application.display.width / 2) - (this.width / 2));
+		this.position.y = Math.floor((application.display.height / 2) - (this.height / 2));
+	}
+
+	onTick()
+	{
+		this.updateLayerOrder();
 	}
 
 	onTileHover(evt)
 	{
 		this.addChild(this.tileCursor);
-		this.tileCursor.hover(evt.row, evt.column, evt.x, evt.y, evt.tile);
+		this.tileCursor.hover(evt.row, evt.column, evt.x, evt.y, evt.z, evt.tile);
 	}
 
 	onTileLeave()
 	{
 		this.removeChild(this.tileCursor);
+	}
+
+}
+
+class WallBase extends PIXI.Graphics
+{
+
+	constructor()
+	{
+		super();
+
+		this.doorHeight = 85;
+		this.tileThickness = 8;
+		this.wallHeight = 115;
+		this.wallThickness = 8;
+	}
+
+}
+
+class WallColumn extends WallBase
+{
+
+	constructor(doorMode)
+	{
+		super();
+
+		let hole = doorMode ? this.doorHeight : 0;
+
+		this.beginFill(0x9697A1);
+		this.moveTo(tileWidthHalf, tileHeightHalf + this.tileThickness);
+		this.lineTo(tileWidthHalf + this.wallThickness, tileHeightHalf + this.tileThickness - (this.wallThickness / 2));
+		this.lineTo(tileWidthHalf + this.wallThickness, tileHeightHalf - (this.wallThickness / 2) - this.wallHeight);
+		this.lineTo(tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.lineTo(tileWidthHalf, tileHeightHalf + this.tileThickness);
+		this.endFill();
+
+		this.beginFill(0xB5B9C9);
+		this.moveTo(tileWidthHalf, tileHeightHalf + this.tileThickness - hole);
+		this.lineTo(tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.lineTo(0, tileHeightHalf - this.wallHeight - tileHeightHalf);
+		this.lineTo(0, this.tileThickness - hole);
+		this.lineTo(tileWidthHalf, tileHeightHalf + this.tileThickness - hole);
+		this.endFill();
+
+		this.beginFill(0x71727B);
+		this.moveTo(tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.lineTo(0, tileHeightHalf - this.wallHeight - tileHeightHalf);
+		this.lineTo(this.wallThickness, tileHeightHalf - this.wallHeight - tileHeightHalf - (this.wallThickness / 2));
+		this.lineTo(tileWidthHalf + this.wallThickness, tileHeightHalf - this.wallHeight - (this.wallThickness / 2));
+		this.lineTo(tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.endFill();
+	}
+
+}
+
+class WallCorner extends WallBase
+{
+
+	constructor()
+	{
+		super();
+
+		this.beginFill(0x71727B);
+		this.moveTo(0, -this.wallHeight);
+		this.lineTo(this.wallThickness, -this.wallHeight - (this.wallThickness / 2));
+		this.lineTo(0, -this.wallHeight - this.wallThickness);
+		this.lineTo(-this.wallThickness, -this.wallHeight - (this.wallThickness / 2));
+		this.lineTo(0, -this.wallHeight);
+		this.endFill();
+	}
+
+}
+
+class WallRow extends WallBase
+{
+
+	constructor(doorMode)
+	{
+		super();
+
+		let hole = doorMode ? this.doorHeight : 0;
+
+		this.beginFill(0xBABECE);
+		this.moveTo(-tileWidthHalf, tileHeightHalf + this.tileThickness);
+		this.lineTo(-tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.lineTo(-tileWidthHalf - this.wallThickness, tileHeightHalf - this.wallHeight - (this.wallThickness / 2));
+		this.lineTo(-tileWidthHalf - this.wallThickness, tileHeightHalf + this.tileThickness - (this.wallThickness / 2));
+		this.lineTo(-tileWidthHalf, tileHeightHalf + this.tileThickness);
+		this.endFill();
+
+		this.beginFill(0x92939D);
+		this.moveTo(-tileWidthHalf, tileHeightHalf + this.tileThickness - hole);
+		this.lineTo(-tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.lineTo(0, tileHeightHalf - this.wallHeight - tileHeightHalf);
+		this.lineTo(0, this.tileThickness - hole);
+		this.lineTo(-tileWidthHalf, tileHeightHalf + this.tileThickness - hole);
+		this.endFill();
+
+		this.beginFill(0x71727B);
+		this.moveTo(-tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.lineTo(0, tileHeightHalf - this.wallHeight - tileHeightHalf);
+		this.lineTo(-this.wallThickness, tileHeightHalf - this.wallHeight - tileHeightHalf - (this.wallThickness / 2));
+		this.lineTo(-tileWidthHalf - this.wallThickness, tileHeightHalf - this.wallHeight - (this.wallThickness / 2));
+		this.lineTo(-tileWidthHalf, tileHeightHalf - this.wallHeight);
+		this.endFill();
 	}
 
 }
@@ -319,6 +552,7 @@ class TileBase extends PIXI.Graphics
 			column: this.column,
 			x: this.x,
 			y: this.y,
+			z: this.z,
 			width: this.width,
 			height: this.height,
 			tile: this
@@ -374,7 +608,7 @@ class TileCursor extends PIXI.Graphics
 		];
 	}
 
-	hover(row, column, x, y, tile)
+	hover(row, column, x, y, z, tile)
 	{
 		let nx = x;
 		let ny = y;
@@ -384,6 +618,8 @@ class TileCursor extends PIXI.Graphics
 
 		this.position.x = nx;
 		this.position.y = ny - 2;
+
+		this.z = z + 1;
 	}
 
 }
