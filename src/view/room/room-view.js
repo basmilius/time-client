@@ -6,10 +6,10 @@ const debugWalls = false;
 
 const hitAreaOffset = 5000;
 
-const tileHeight = 32;
-const tileHeightHalf = tileHeight / 2;
-const tileWidth = 64;
-const tileWidthHalf = tileWidth / 2;
+export const tileHeight = 32;
+export const tileHeightHalf = tileHeight / 2;
+export const tileWidth = 64;
+export const tileWidthHalf = tileWidth / 2;
 
 let heightMaps = [];
 
@@ -417,8 +417,9 @@ export class RoomView extends PIXI.Graphics
 						else if (wallR)
 							tile.tint = 0x0000FF;
 
-					tile.on("leave", evt => this.onTileLeave(evt));
-					tile.on("hover", evt => this.onTileHover(evt));
+					tile.on("tile-click", evt => this.onTileClick(evt));
+					tile.on("tile-hover", evt => this.onTileHover(evt));
+					tile.on("tile-leave", evt => this.onTileLeave(evt));
 
 					tile.x = x;
 					tile.y = y;
@@ -461,21 +462,36 @@ export class RoomView extends PIXI.Graphics
 		entity.z = pos.z;
 	}
 
-	centerEntity(entity)
+	centerEntity(entity, animate = true)
 	{
 		let x = application.display.width / 2;
 		let y = application.display.height / 2;
 
-		x -= entity.x + entity.width / 2;
-		y -= entity.y + entity.height / 2;
+		x -= Math.round(entity.x + entity.width / 2);
+		y -= Math.round(entity.y + entity.height / 2);
 
-		anime({
-			targets: this,
-			x,
-			y,
-			duration: 800,
-			easing: 'easeInOutSine'
-		});
+		x = x - (x % 2);
+
+		if (animate)
+		{
+			anime({
+				targets: this,
+				x,
+				y,
+				duration: 800,
+				easing: "easeInOutSine"
+			});
+		}
+		else
+		{
+			anime({
+				targets: this,
+				x,
+				y,
+				duration: 45,
+				easing: "linear"
+			});
+		}
 	}
 
 	getEntityPosition(entity, row, column)
@@ -487,7 +503,7 @@ export class RoomView extends PIXI.Graphics
 			offsets = entity.getRoomOffsets();
 
 		let x = (this.getX(row, column) + tileWidthHalf) + (offsets.x + this.offsets.x);
-		let y = (this.getY(row, column) + tileHeightHalf) + (offsets.y + this.offsets.y) + (tile && !(tile instanceof Tile) ? tileHeightHalf : 0);
+		let y = (this.getY(row, column) + tileHeightHalf) + (offsets.y + this.offsets.y) + (tile && !(tile instanceof Tile) ? (tileHeightHalf / 2) : 0);
 		let z = this.getZ(row, column, 5);
 
 		return {x, y, z};
@@ -537,13 +553,18 @@ export class RoomView extends PIXI.Graphics
 		this.updateLayerOrder();
 	}
 
+	onTileClick(evt)
+	{
+		this.emit("tile-click", evt);
+	}
+
 	onTileHover(evt)
 	{
 		this.addChild(this.tileCursor);
 		this.tileCursor.hover(evt.row, evt.column, evt.x, evt.y, this.getZ(evt.row, evt.column, 1), evt.tile);
 	}
 
-	onTileLeave()
+	onTileLeave(evt)
 	{
 		this.removeChild(this.tileCursor);
 	}
@@ -676,13 +697,28 @@ class TileBase extends PIXI.Graphics
 		this.interactive = true;
 		this.thickness = 8;
 
+		this.on("click", () => this.onClick());
 		this.on("pointerover", () => this.onMouseOver());
 		this.on("pointerout", () => this.onMouseOut());
 	}
 
+	onClick()
+	{
+		this.emit("tile-click", {
+			row: this.row,
+			column: this.column,
+			x: this.x,
+			y: this.y,
+			z: this.z,
+			width: this.width,
+			height: this.height,
+			tile: this
+		});
+	}
+
 	onMouseOver()
 	{
-		this.emit("hover", {
+		this.emit("tile-hover", {
 			row: this.row,
 			column: this.column,
 			x: this.x,
@@ -696,7 +732,7 @@ class TileBase extends PIXI.Graphics
 
 	onMouseOut()
 	{
-		this.emit("leave", {
+		this.emit("tile-leave", {
 			row: this.row,
 			column: this.column,
 			x: this.x,

@@ -657,6 +657,8 @@ export class Avatar extends PIXI.Container
 		if (this._initial === true)
 			return;
 
+		this.emit("avatar-build", this);
+
 		this.lastUpdate = application.ticker.lastTime;
 
 		this.invalidate();

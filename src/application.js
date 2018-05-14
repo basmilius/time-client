@@ -7,7 +7,8 @@ import { ConfigManager } from "./core/config/config.js";
 import { initialLoadingDelay } from "./preferences.js";
 import { InterfaceContainer, InterfaceManager } from "./ui/interface/interface.js";
 import { RoomView } from "./view/room/room-view.js";
-import { randomFigure } from "./core/dev-utils.js";
+import { randomFigure, walkTo } from "./core/dev-utils.js";
+import { Furni, FurniManager } from "./view/furni/furni.js";
 
 export class InitializerLoader extends PIXI.loaders.Loader
 {
@@ -85,6 +86,8 @@ export class Application extends PIXI.utils.EventEmitter
 		this.addManager(new I18nManager());
 
 		this.addManager(new AvatarManager());
+		this.addManager(new FurniManager());
+
 		this.addManager(new InterfaceManager());
 	}
 
@@ -138,6 +141,7 @@ export class Application extends PIXI.utils.EventEmitter
 		initializeAvatarRenderer();
 
 		let avatars = [undefined, undefined];
+		let furnis = [undefined];
 		let roomViewer = new RoomView();
 
 		this.stage.addChild(roomViewer);
@@ -146,18 +150,26 @@ export class Application extends PIXI.utils.EventEmitter
 		roomViewer.addChild(avatars[0] = new Avatar(randomFigure(), "vertical", "full"));
 		roomViewer.addChild(avatars[1] = new Avatar(randomFigure(), "vertical", "full"));
 
+		roomViewer.addChild(furnis[0] = new Furni("throne"));
+
 		roomViewer.associateEntityToTile(avatars[0], 15, 0);
 		roomViewer.associateEntityToTile(avatars[1], 9, 20);
 
-		avatars[0].addAction("Move");
-		avatars[0].addAction("Blow");
+		roomViewer.associateEntityToTile(furnis[0], 9, 21);
+
+		let current = {cr: 15, cc: 0, avatar: avatars[0]};
+
+		// avatars[0].addAction("Blow");
 		avatars[0].on("click", () => avatars[0].figure = randomFigure());
 		avatars[0].on("click", () => roomViewer.centerEntity(avatars[0]));
 
-		avatars[1].addAction("Move");
 		avatars[1].addAction("Wave");
 		avatars[1].on("click", () => avatars[1].figure = randomFigure());
 		avatars[1].on("click", () => roomViewer.centerEntity(avatars[1]));
+
+		roomViewer.centerEntity(avatars[0]);
+
+		roomViewer.on("tile-click", evt => avatars[0].once("avatar-build", async () => current = await walkTo(roomViewer, current.avatar, current.cr, current.cc, evt.row, evt.column)));
 	}
 
 	getResource(resource, loader = undefined)
