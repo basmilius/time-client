@@ -1,4 +1,4 @@
-import { Avatar, AvatarManager, initializeAvatarRenderer } from "./core/avatar/avatar.js";
+import { Avatar, AvatarManager, initializeAvatarRenderer } from "./view/avatar/avatar.js";
 import { Logger } from "./core/logging.js";
 import { LoadingView } from "./view/loading-view.js";
 import { Display } from "./display.js";
@@ -7,7 +7,6 @@ import { ConfigManager } from "./core/config/config.js";
 import { initialLoadingDelay } from "./preferences.js";
 import { InterfaceContainer, InterfaceManager } from "./ui/interface/interface.js";
 import { RoomView } from "./view/room/room-view.js";
-import { application } from "./bootstrapper.js";
 import { randomFigure } from "./core/dev-utils.js";
 
 export class InitializerLoader extends PIXI.loaders.Loader
@@ -152,22 +151,13 @@ export class Application extends PIXI.utils.EventEmitter
 
 		avatars[0].addAction("Move");
 		avatars[0].addAction("Blow");
-		// avatars[0].on("click", () => avatars[0].figure = randomFigure());
+		avatars[0].on("click", () => avatars[0].figure = randomFigure());
 		avatars[0].on("click", () => roomViewer.centerEntity(avatars[0]));
 
 		avatars[1].addAction("Move");
 		avatars[1].addAction("Wave");
 		avatars[1].on("click", () => avatars[1].figure = randomFigure());
 		avatars[1].on("click", () => roomViewer.centerEntity(avatars[1]));
-
-		// application.ticker.add(() =>
-		// {
-		// 	if (application.display.frame % 6 > 0)
-		// 		return;
-		//
-		// 	avatars[0].direction = avatars[0].headDirection = (++avatars[0].direction % 8);
-		// 	avatars[1].direction = avatars[1].headDirection = (++avatars[1].direction % 8);
-		// });
 	}
 
 	getResource(resource, loader = undefined)

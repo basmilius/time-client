@@ -1,4 +1,4 @@
-import { Avatar } from "../../core/avatar/avatar.js";
+import { Avatar } from "../../view/avatar/avatar.js";
 import { application } from "../../bootstrapper.js";
 import { interfaceResources } from "./interface.js";
 

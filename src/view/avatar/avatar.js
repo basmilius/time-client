@@ -1,9 +1,9 @@
 import { application } from "../../bootstrapper.js";
-import { Logger } from "../logging.js";
-import { querySelectorAllArray } from "../dom-utils.js";
-import { Manager } from "../manager/manager.js";
+import { Logger } from "../../core/logging.js";
+import { querySelectorAllArray } from "../../core/dom-utils.js";
+import { Manager } from "../../core/manager/manager.js";
 import { InitializerLoader } from "../../application.js";
-import { setInteractive } from "../pixi-utils.js";
+import { setInteractive } from "../../core/pixi-utils.js";
 
 const ROOT = "https://cdn.mili.us/time/assets/clothing";
 const LIBS = `${ROOT}/lib`;
