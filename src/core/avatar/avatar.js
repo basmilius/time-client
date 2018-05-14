@@ -34,11 +34,19 @@ const avatarResources = {
 	}
 };
 
+let actionsSorted = null;
+let defaultAction = null;
 let loadingAvatar = null;
 let radiusComparator = (a, b) => b.getAttribute("z") - a.getAttribute("z");
 
 export function initializeAvatarRenderer()
 {
+	if (actionsSorted === null)
+		actionsSorted = querySelectorAllArray("action", getActions()).map(action => action.getAttribute("id"));
+
+	if (defaultAction === null)
+		defaultAction = getAction("Default");
+
 	if (loadingAvatar === null)
 		loadingAvatar = new Avatar("hd-195-1");
 }
@@ -236,6 +244,9 @@ function getAction(id)
 {
 	const action = getActions().querySelector(`action[id="${id}"]`);
 	const definition = {};
+
+	if (action === null)
+		return undefined;
 
 	action.attributes.forEach(attribute => definition[attribute.name] = attribute.value);
 
@@ -493,14 +504,11 @@ export class FigureString
 
 }
 
-export class Avatar extends PIXI.Graphics
+export class Avatar extends PIXI.Container
 {
 
 	get actions()
 	{
-		if (this._actions.length === 0)
-			return [getAction("Default")];
-
 		return this._actions;
 	}
 
@@ -512,7 +520,6 @@ export class Avatar extends PIXI.Graphics
 	set avatarSet(value)
 	{
 		this._avatarSet = value;
-		this.buildSync();
 	}
 
 	get direction()
@@ -523,7 +530,6 @@ export class Avatar extends PIXI.Graphics
 	set direction(value)
 	{
 		this._direction = value;
-		this.buildSync();
 	}
 
 	get figure()
@@ -533,8 +539,10 @@ export class Avatar extends PIXI.Graphics
 
 	set figure(value)
 	{
+		if (value === undefined)
+			return;
+
 		this._figure = new FigureString(value);
-		this.buildSync();
 		this.poof();
 	}
 
@@ -546,7 +554,6 @@ export class Avatar extends PIXI.Graphics
 	set geometry(value)
 	{
 		this._geometry = value;
-		this.buildSync();
 	}
 
 	get headDirection()
@@ -557,7 +564,6 @@ export class Avatar extends PIXI.Graphics
 	set headDirection(value)
 	{
 		this._headDirection = value;
-		this.buildSync();
 	}
 
 	constructor(figure = "lg-3116-110-92.hr-3163-61.sh-3275-92.hd-195-4.ha-3268-1415-92.ch-255-92", geometry = "vertical", avatarSet = "full")
@@ -567,16 +573,20 @@ export class Avatar extends PIXI.Graphics
 		setInteractive(this);
 
 		this.canPoof = true;
+		this.lastUpdate = -1;
 		this.loader = new PIXI.loaders.Loader();
+		this.partContainer = new PIXI.Container();
+
+		this.addChild(this.partContainer);
 
 		this._alsoUpdate = [];
 		this._initial = true;
+		this._ticker = false;
 		this._width = 0;
 		this._height = 0;
 
-		this._actions = [];
+		this._actions = [defaultAction];
 		this._frames = {};
-		this._intervals = {};
 
 		this.avatarSet = avatarSet;
 		this.direction = 2;
@@ -596,21 +606,18 @@ export class Avatar extends PIXI.Graphics
 				return;
 
 		action = getAction(action);
-		this._actions.push(action);
+
+		if (action === undefined)
+			return;
+
+		this._actions
+			.pushChain(action)
+			.sort((a, b) => actionsSorted.indexOf(b.id) - actionsSorted.indexOf(a.id));
 
 		this._frames[action.id] = 0;
 
-		if (action.id !== "Default" && this._intervals[action.id] === undefined)
-			this._intervals[action.id] = setInterval(() => this.update(action), action["precedence"] / getAnimationFramesCount(action.id));
-
 		if (action["preventheadturn"] === "true")
-		{
-			this._alsoUpdate.push("head");
 			this._headDirection = this.direction;
-		}
-
-		this.update();
-		this.update(action);
 	}
 
 	hasAction(action)
@@ -629,15 +636,9 @@ export class Avatar extends PIXI.Graphics
 		if (!this.hasAction(action))
 			return;
 
-		this._actions = this._actions.filter(a => a.id !== action);
-
-		if (this._intervals[action] !== undefined)
-		{
-			clearInterval(this._intervals[action]);
-			this._intervals[action] = undefined;
-		}
-
-		this.update();
+		this._actions = this._actions
+			.filter(a => a.id !== action)
+			.sort((a, b) => actionsSorted.indexOf(b.id) - actionsSorted.indexOf(a.id));
 	}
 
 	setPosition(x, y, dir = 3)
@@ -655,6 +656,8 @@ export class Avatar extends PIXI.Graphics
 	{
 		if (this._initial === true)
 			return;
+
+		this.lastUpdate = application.ticker.lastTime;
 
 		this.invalidate();
 		this.decideGeometry();
@@ -694,32 +697,11 @@ export class Avatar extends PIXI.Graphics
 		let activePartSets = [];
 
 		if (action === null)
-		{
 			activePartSets.push(...getActivePartSets("figure"));
-		}
 		else
-		{
 			activePartSets.push(...getActivePartSets(action["activepartset"]));
 
-			if (action.id === "Move" && this.hasActivePartSet("handLeft"))
-			{
-				const handLeft = getActivePartSets("handLeft");
-
-				activePartSets = activePartSets.filter(p => handLeft.indexOf(p) === -1);
-			}
-
-			if (action.id === "Move" && this.hasActivePartSet("handRightAndHead"))
-			{
-				const handRightAndHead = getActivePartSets("handRightAndHead");
-
-				activePartSets = activePartSets.filter(p => handRightAndHead.indexOf(p) === -1);
-			}
-		}
-
-		while (this._alsoUpdate.length)
-			activePartSets.push(...getActivePartSets(this._alsoUpdate.shift()));
-
-		return activePartSets.filter((value, index, self) => self.indexOf(value) === index);
+		return activePartSets.unique();
 	}
 
 	hasActivePartSet(id)
@@ -760,7 +742,15 @@ export class Avatar extends PIXI.Graphics
 			});
 		});
 
-		return libraries.filter((value, index, self) => self.indexOf(value) === index);
+		return libraries.unique();
+	}
+
+	getRoomOffsets()
+	{
+		let x = -(this._width / 2);
+		let y = -104;
+
+		return {x, y};
 	}
 
 	gatherParts()
@@ -810,7 +800,6 @@ export class Avatar extends PIXI.Graphics
 		this._sprites = {};
 
 		this.decideGeometry();
-		this.update();
 	}
 
 	poof()
@@ -898,32 +887,37 @@ export class Avatar extends PIXI.Graphics
 		let draworderId = "std";
 
 		if (this.hasActivePartSet("handLeft"))
-			draworderId = this.direction > 3 && this.direction < 7 ? "lh-up" : "rh-up";
-		else if (this.hasActivePartSet("handRightAndHead"))
 			draworderId = this.direction > 3 && this.direction < 7 ? "rh-up" : "lh-up";
+		else if (this.hasActivePartSet("handRightAndHead"))
+			draworderId = this.direction > 3 && this.direction < 7 ? "lh-up" : "rh-up";
 
 		let draworder = querySelectorAllArray(`action[id="${draworderId}"] direction[id="${this.direction}"] partList part`, getDraworder()).map(part => part.getAttribute("set-type"));
 
 		if (draworder.length === 0)
 			draworder = querySelectorAllArray(`action[id="std"] direction[id="${this.direction}"] partList part`, getDraworder()).map(part => part.getAttribute("set-type"));
 
-		this.clear();
-
-		while (this.children[0])
-			this.removeChild(this.children[0]);
+		while (this.partContainer.children[0])
+			this.partContainer.removeChild(this.partContainer.children[0]);
 
 		for (let type of draworder)
 			if (this._sprites[type] !== undefined)
-				this._sprites[type].forEach(part => this.addChild(part));
+				this._sprites[type].forEach(part => this.partContainer.addChild(part));
+
+		if (this._ticker === false)
+		{
+			this._ticker = true;
+
+			application.ticker.add(() =>
+			{
+				if (this.lastUpdate === -1 || (application.ticker.lastTime - this.lastUpdate) > 120)
+					this.buildSync();
+			});
+		}
 	}
 
-	update(action = null)
+	update()
 	{
-		if (action !== null)
-			this.updateAction(action);
-		else
-			this.actions.forEach(action => this.updateAction(action));
-
+		this.actions.forEach(action => this.updateAction(action));
 		this.render();
 	}
 
@@ -1035,8 +1029,8 @@ export class Avatar extends PIXI.Graphics
 
 					if (sprite === null)
 					{
-						if (partType !== "ey" && partType !== "fc")
-							Logger.debug("Sprite not found!", generateAssetName(), part.library, partType);
+						// if (partType !== "ey" && partType !== "fc")
+						// 	Logger.debug("Sprite not found!", generateAssetName(), part.library, partType);
 
 						break; // Don't draw incomplete pieces.
 					}

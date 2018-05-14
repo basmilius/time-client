@@ -1,4 +1,4 @@
-import { AvatarManager, initializeAvatarRenderer } from "./core/avatar/avatar.js";
+import { Avatar, AvatarManager, initializeAvatarRenderer } from "./core/avatar/avatar.js";
 import { Logger } from "./core/logging.js";
 import { LoadingView } from "./view/loading-view.js";
 import { Display } from "./display.js";
@@ -7,7 +7,8 @@ import { ConfigManager } from "./core/config/config.js";
 import { initialLoadingDelay } from "./preferences.js";
 import { InterfaceContainer, InterfaceManager } from "./ui/interface/interface.js";
 import { RoomView } from "./view/room/room-view.js";
-import { Avatar } from "./core/avatar/avatar.js";
+import { application } from "./bootstrapper.js";
+import { randomFigure } from "./core/dev-utils.js";
 
 export class InitializerLoader extends PIXI.loaders.Loader
 {
@@ -137,23 +138,35 @@ export class Application extends PIXI.utils.EventEmitter
 
 		initializeAvatarRenderer();
 
-		// let avatar, frame = 0;
+		let avatars = [undefined, undefined];
+		let roomViewer = new RoomView();
 
-		this.stage.addChild(new RoomView());
+		this.stage.addChild(roomViewer);
 		this.stage.addChild(new InterfaceContainer());
-		this.stage.addChild(new Avatar("lg-3116-110-92.hr-3163-61.sh-3275-92.hd-195-4.ha-3268-1415-92.ch-255-92", "vertical", "full").setPosition(100, 100, 6));
-		this.stage.addChild(new Avatar("lg-3116-110-92.hr-3163-61.sh-3275-92.hd-195-4.ha-3268-1415-92.ch-255-92", "vertical", "full").setPosition(200, 100, 4));
-		this.stage.addChild(new Avatar("hr-3163-61.cc-3075-73.ca-3175-92.hd-195-3.ch-3030-92.sh-3016-64.lg-3116-110-92", "vertical", "full").setPosition(300, 100, 2));
-		this.stage.addChild(new Avatar("hr-3163-61.cc-3075-73.ca-3175-92.hd-195-3.ch-3030-92.sh-3016-64.lg-3116-110-92", "vertical", "full").setPosition(400, 100, 0));
-		this.stage.addChild(new Avatar("lg-3116-110-92.hr-3163-61.sh-3275-92.hd-195-4.ha-3268-1415-92.ch-255-92", "vertical", "full").setPosition(100, 300, 3));
-		// this.stage.addChild(new Avatar("hr-3163-61.cc-3075-73.ca-3175-92.hd-195-3.ch-3030-92.sh-3016-64.lg-3116-110-92", "vertical", "full").setPosition(200, 300, 3));
-		// this.stage.addChild(new Avatar("lg-3116-110-92.hr-3163-61.sh-3275-92.hd-195-4.ha-3268-1415-92.ch-255-92", "vertical", "full").setPosition(300, 300, 3));
-		// this.stage.addChild(avatar = new Avatar("hd-195-3", "vertical", "full").setPosition(400, 300, 0));
-		//
-		// this.ticker.add(() =>
+
+		roomViewer.addChild(avatars[0] = new Avatar(randomFigure(), "vertical", "full"));
+		roomViewer.addChild(avatars[1] = new Avatar(randomFigure(), "vertical", "full"));
+
+		roomViewer.associateEntityToTile(avatars[0], 15, 0);
+		roomViewer.associateEntityToTile(avatars[1], 9, 20);
+
+		avatars[0].addAction("Move");
+		avatars[0].addAction("Blow");
+		// avatars[0].on("click", () => avatars[0].figure = randomFigure());
+		avatars[0].on("click", () => roomViewer.centerEntity(avatars[0]));
+
+		avatars[1].addAction("Move");
+		avatars[1].addAction("Wave");
+		avatars[1].on("click", () => avatars[1].figure = randomFigure());
+		avatars[1].on("click", () => roomViewer.centerEntity(avatars[1]));
+
+		// application.ticker.add(() =>
 		// {
-		// 	if (frame++ % 10 === 0)
-		// 		avatar.direction = avatar.headDirection = (avatar.direction + 1) % 8;
+		// 	if (application.display.frame % 6 > 0)
+		// 		return;
+		//
+		// 	avatars[0].direction = avatars[0].headDirection = (++avatars[0].direction % 8);
+		// 	avatars[1].direction = avatars[1].headDirection = (++avatars[1].direction % 8);
 		// });
 	}
 

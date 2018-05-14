@@ -1,7 +1,6 @@
 import { Avatar } from "../../core/avatar/avatar.js";
 import { application } from "../../bootstrapper.js";
 import { interfaceResources } from "./interface.js";
-import { withInstance } from "../../core/pixi-utils.js";
 
 const memenuSize = 60;
 const memenuSizeHalf = Math.floor(memenuSize / 2);
@@ -24,17 +23,8 @@ export class MeMenu extends PIXI.Container
 		super();
 
 		this._avatarHolder = new PIXI.Graphics();
+		this._avatarHolder.buttonMode = true;
 		this._avatarHolder.interactive = true;
-		this._avatarHolder.filters = [
-			withInstance(new PIXI.filters.DropShadowFilter(), shadow =>
-			{
-				shadow.color = 0x000000;
-				shadow.alpha = 0.2;
-				shadow.blur = 0;
-				shadow.distance = 2;
-				shadow.rotation = 90;
-			})
-		];
 		this._avatarHolder.on("pointerover", () => this.onAvatarHover());
 		this._avatarHolder.on("pointerout", () => this.onAvatarLeave());
 
@@ -67,8 +57,13 @@ export class MeMenu extends PIXI.Container
 		this.position.y = application.display.height - (memenuSize + 16);
 
 		this._avatarHolder.clear();
+
+		this._avatarHolder.beginFill(0x000000, 0.25);
+		this._avatarHolder.drawCircle(memenuSizeHalf, memenuSizeHalf + 2, memenuSizeHalf + 2);
+		this._avatarHolder.endFill();
+
 		this._avatarHolder.beginFill(0x0C3A65);
-		this._avatarHolder.lineStyle(3, 0x244d74);
+		this._avatarHolder.lineStyle(4, 0x244d74);
 		this._avatarHolder.drawCircle(memenuSizeHalf, memenuSizeHalf, memenuSizeHalf);
 		this._avatarHolder.endFill();
 	}

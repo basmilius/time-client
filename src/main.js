@@ -1,5 +1,17 @@
 import { Bootstrapper } from "./bootstrapper.js";
 
+Array.prototype.pushChain = function (...entries)
+{
+	this.push(...entries);
+
+	return this;
+};
+
+Array.prototype.unique = function ()
+{
+	return this.filter((value, index, self) => self.indexOf(value) === index);
+};
+
 Object.prototype.forEach = function (callback)
 {
 	for (let key in this)

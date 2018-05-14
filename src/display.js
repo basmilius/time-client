@@ -1,9 +1,16 @@
 import { removeHtml } from "./core/dom-utils.js";
 
+let frame = 0;
+
 const stageElement = "main#stage-mount";
 
 export class Display extends PIXI.utils.EventEmitter
 {
+
+	get frame()
+	{
+		return frame;
+	}
 
 	get renderer()
 	{
@@ -49,6 +56,8 @@ export class Display extends PIXI.utils.EventEmitter
 
 		this.initApp();
 		this.initEvents();
+
+		this.ticker.add(() => frame++);
 	}
 
 	initApp()
@@ -73,7 +82,6 @@ export class Display extends PIXI.utils.EventEmitter
 	onWindowResize()
 	{
 		this.renderer.resize(window.innerWidth / this.dpi, window.innerHeight / this.dpi);
-
 		this.emit("resize");
 	}
 
