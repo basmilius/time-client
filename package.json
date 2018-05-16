@@ -1,0 +1,46 @@
+{
+	"name": "@time/client",
+	"version": "1.0.0",
+	"description": "Habbo client by Bas Milius.",
+	"scripts": {
+		"build": "node build/build-client.js",
+		"test": "http-server -c-1"
+	},
+	"main": "src/main.js",
+	"dependencies": {
+		"animejs": "^2.2.0",
+		"pixi-filters": "^2.6.1",
+		"pixi.js": "^4.7.3"
+	},
+	"devDependencies": {
+		"babel-core": "^6.26.3",
+		"babel-plugin-external-helpers": "^6.22.0",
+		"babel-plugin-transform-runtime": "^6.23.0",
+		"babel-preset-env": "^1.7.0",
+		"babel-preset-es2015-rollup": "^3.0.0",
+		"rollup": "^0.59.0",
+		"rollup-plugin-babel": "^3.0.4",
+		"rollup-plugin-multi-entry": "^2.0.2",
+		"rollup-plugin-node-resolve": "^3.3.0",
+		"rollup-plugin-uglify": "^3.0.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/basmilius/time-client.git"
+	},
+	"keywords": [
+		"habbo",
+		"client",
+		"pixel",
+		"pixeltime",
+		"pixeljs",
+		"time",
+		"timejs"
+	],
+	"author": "Bas Milius",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/basmilius/time-client/issues"
+	},
+	"homepage": "https://github.com/basmilius/time-client#readme"
+}

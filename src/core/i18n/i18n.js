@@ -31,7 +31,7 @@ export class I18nManager extends Manager
 		if (string === undefined && defaultValue !== undefined)
 			return defaultValue;
 
-		return evaluateString(string, {...context, ...this.text, ...application.getManager(ConfigManager).config});
+		return evaluateString(string, Object.assign({}, context, this.text, application.getManager(ConfigManager).config));
 	}
 
 	onTextsLoaded(texts)

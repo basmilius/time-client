@@ -21,12 +21,17 @@ Object.prototype.forEach = function (callback)
 
 PIXI.Container.prototype.updateLayerOrder = function ()
 {
-	this.children.sort(function (a, b)
-	{
-		a.z = a.z || 0;
-		b.z = b.z || 0;
+	let i = 0;
 
-		return a.z - b.z
+	this.children.sort((a, b) =>
+	{
+		let az = a.z || 0;
+		let bz = b.z || 0;
+
+		if (az === bz)
+			return this.children.indexOf(a) - this.children.indexOf(b);
+
+		return az - bz;
 	});
 };
 

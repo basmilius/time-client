@@ -30,7 +30,7 @@ export class ConfigManager extends Manager
 		if (string === undefined && defaultValue !== undefined)
 			return defaultValue;
 
-		return evaluateString(string, {...context, ...this.text});
+		return evaluateString(string, Object.assign({}, context, this.config));
 	}
 
 	onConfigLoaded(config)

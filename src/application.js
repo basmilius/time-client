@@ -1,4 +1,5 @@
-import { Avatar, AvatarManager, initializeAvatarRenderer } from "./view/avatar/avatar.js";
+import { Avatar } from "./view/avatar/avatar.js";
+import { AvatarManager } from "./view/avatar/manager.js";
 import { Logger } from "./core/logging.js";
 import { LoadingView } from "./view/loading-view.js";
 import { Display } from "./display.js";
@@ -9,6 +10,7 @@ import { InterfaceContainer, InterfaceManager } from "./ui/interface/interface.j
 import { RoomView } from "./view/room/room-view.js";
 import { randomFigure, walkTo } from "./core/dev-utils.js";
 import { Furni, FurniManager } from "./view/furni/furni.js";
+import { RoomManager } from "./view/room/manager.js";
 
 export class InitializerLoader extends PIXI.loaders.Loader
 {
@@ -87,6 +89,7 @@ export class Application extends PIXI.utils.EventEmitter
 
 		this.addManager(new AvatarManager());
 		this.addManager(new FurniManager());
+		this.addManager(new RoomManager());
 
 		this.addManager(new InterfaceManager());
 	}
@@ -134,11 +137,11 @@ export class Application extends PIXI.utils.EventEmitter
 		Logger.debug("Application", "Loading of manager data done!");
 		this.emit("application-loading-done");
 
+		this.getManager(AvatarManager).initializeRenderer();
+
 		delete this.loader;
 
 		this.stage.removeChild(this.loadingView);
-
-		initializeAvatarRenderer();
 
 		let avatars = [undefined, undefined];
 		let furnis = [undefined];
@@ -152,12 +155,13 @@ export class Application extends PIXI.utils.EventEmitter
 
 		roomViewer.addChild(furnis[0] = new Furni("throne"));
 
-		roomViewer.associateEntityToTile(avatars[0], 15, 0);
-		roomViewer.associateEntityToTile(avatars[1], 9, 20);
+		roomViewer.associateEntityToTile(avatars[0], 15, 0, 2);
+		roomViewer.associateEntityToTile(avatars[1], 8, 20, 2);
 
-		roomViewer.associateEntityToTile(furnis[0], 9, 21);
+		roomViewer.associateEntityToTile(furnis[0], 8, 21, 2);
 
-		let current = {cr: 15, cc: 0, avatar: avatars[0]};
+		let controllingAvatar = 0;
+		let current = {cr: 15, cc: 0, avatar: avatars[controllingAvatar]};
 
 		// avatars[0].addAction("Blow");
 		avatars[0].on("click", () => avatars[0].figure = randomFigure());
@@ -167,9 +171,9 @@ export class Application extends PIXI.utils.EventEmitter
 		avatars[1].on("click", () => avatars[1].figure = randomFigure());
 		avatars[1].on("click", () => roomViewer.centerEntity(avatars[1]));
 
-		roomViewer.centerEntity(avatars[0]);
+		// roomViewer.centerEntity(avatars[controllingAvatar]);
 
-		roomViewer.on("tile-click", evt => avatars[0].once("avatar-build", async () => current = await walkTo(roomViewer, current.avatar, current.cr, current.cc, evt.row, evt.column)));
+		roomViewer.on("tile-click", evt => avatars[controllingAvatar].once("avatar-build", async () => current = await walkTo(roomViewer, current.avatar, current.cr, current.cc, evt.row, evt.column)));
 	}
 
 	getResource(resource, loader = undefined)

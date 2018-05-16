@@ -1,6 +1,6 @@
 import { Manager } from "../../core/manager/manager.js";
 import { application } from "../../bootstrapper.js";
-import { tileHeightHalf, tileWidthHalf } from "../room/room-view.js";
+import { tileHeightHalf, tileWidthHalf } from "../room/shared.js";
 
 const furniResources = {
 	loading: "./resource/image/furni/loading.png"
