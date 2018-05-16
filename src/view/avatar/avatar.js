@@ -3,7 +3,7 @@ import { querySelectorAllArray } from "../../core/dom-utils.js";
 import { setInteractive } from "../../core/pixi-utils.js";
 import { FigureString } from "./figure.js";
 import { actionsSorted, defaultAction, getAction, getActivePartSets, getAnimationFrames, getAnimationFramesCount, getAnimationOffset, getDraworder, getFigureData, getFigureMap, getFlippedSetType, getGeometry, getRemoveSetType, getSprite, getValidActionsForPart, isLibraryLoaded, loadAvatarClothingLibrary, loadingAvatar, radiusComparator } from "./shared.js";
-import { avatarResources } from "./manager.js";
+import { AvatarManager, avatarResources } from "./manager.js";
 
 export class Avatar extends PIXI.Container
 {
@@ -73,15 +73,14 @@ export class Avatar extends PIXI.Container
 
 		setInteractive(this);
 
-		this.canPoof = true;
-		this.lastUpdate = -1;
+		this.canPoof = false;
+		this.id = "avatar-" + window.performance.now();
 		this.loader = new PIXI.loaders.Loader();
 		this.partContainer = new PIXI.Container();
 
 		this.addChild(this.partContainer);
 
 		this._alsoUpdate = [];
-		this._initial = true;
 		this._ticker = false;
 		this._width = 0;
 		this._height = 0;
@@ -95,9 +94,9 @@ export class Avatar extends PIXI.Container
 		this.geometry = geometry;
 		this.headDirection = this.direction;
 
-		this._initial = false;
+		this.build();
 
-		this.buildSync();
+		this.canPoof = true;
 	}
 
 	addAction(action)
@@ -153,31 +152,32 @@ export class Avatar extends PIXI.Container
 		return this;
 	}
 
-	async build()
+	build()
 	{
 		this.emit("avatar-build", this);
-
-		this.lastUpdate = application.ticker.lastTime;
-
 		this.invalidate();
 
-		const libraries = this.getLibraries();
+		const libraries = this.getLibraries().filter(library => !isLibraryLoaded(library));
 
-		for (let library of libraries)
+		if (libraries.length > 0)
 		{
-			if (isLibraryLoaded(library))
-				continue;
+			this._loading = true;
 
-			await loadAvatarClothingLibrary(library, this.loader);
+			const download = () =>
+			{
+				if (libraries.length === 0)
+				{
+					this._loading = false;
+					return;
+				}
+
+				loadAvatarClothingLibrary(libraries.shift(), this.loader).then(download);
+			};
+
+			download();
 		}
 
-		this._loading = false;
 		this.update();
-	}
-
-	buildSync()
-	{
-		this.build().then();
 	}
 
 	decideGeometry()
@@ -293,18 +293,16 @@ export class Avatar extends PIXI.Container
 
 	invalidate()
 	{
-		this._loading = true;
 		this._parts = {};
 		this._sprites = {};
 
 		this.decideGeometry();
 		this.gatherParts();
-		this.update();
 	}
 
 	poof()
 	{
-		if (this._initial || !this.canPoof)
+		if (!this.canPoof)
 			return;
 
 		const clouds = [
@@ -402,17 +400,6 @@ export class Avatar extends PIXI.Container
 		for (let type of draworder)
 			if (this._sprites[type] !== undefined)
 				this._sprites[type].forEach(part => this.partContainer.addChild(part));
-
-		if (this._ticker === false)
-		{
-			this._ticker = true;
-
-			application.ticker.add(() =>
-			{
-				if (this.lastUpdate === -1 || (application.ticker.lastTime - this.lastUpdate) > 90)
-					this.buildSync();
-			});
-		}
 	}
 
 	update()
@@ -569,6 +556,11 @@ export class Avatar extends PIXI.Container
 				}
 			}
 		}
+	}
+
+	destroy()
+	{
+		application.getManager(AvatarManager).removeAvatar(this);
 	}
 
 }

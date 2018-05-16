@@ -1,5 +1,7 @@
 import { initializeAvatarRenderer, loadAvatarClothingConfig, loadAvatarClothingLibrary } from "./shared.js";
 import { Manager } from "../../core/manager/manager.js";
+import { Avatar } from "./avatar.js";
+import { application } from "../../bootstrapper.js";
 
 export const avatarResources = {
 	poof: {
@@ -28,6 +30,9 @@ export class AvatarManager extends Manager
 	constructor()
 	{
 		super();
+
+		this.avatars = [];
+		this.lastUpdate = 0;
 	}
 
 	async initialize()
@@ -53,6 +58,30 @@ export class AvatarManager extends Manager
 	initializeRenderer()
 	{
 		initializeAvatarRenderer();
+
+		application.ticker.add(() =>
+		{
+			if (this.lastUpdate === -1 || (application.ticker.lastTime - this.lastUpdate) > 90)
+			{
+				this.lastUpdate = application.ticker.lastTime;
+
+				this.avatars.forEach(avatar => avatar.build());
+			}
+		});
+	}
+
+	newAvatar(...options)
+	{
+		const avatar = new Avatar(...options);
+
+		this.avatars.push(avatar);
+
+		return avatar;
+	}
+
+	removeAvatar(avatar)
+	{
+		this.avatars = this.avatars.filter(a => a.id !== avatar.id);
 	}
 
 }

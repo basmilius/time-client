@@ -15,6 +15,11 @@ export let defaultAction = null;
 export let loadingAvatar = null;
 export let radiusComparator = (a, b) => b.getAttribute("z") - a.getAttribute("z");
 
+function onClothingLibraryLoaded(library, data)
+{
+	LOADED_LIBS[library] = data;
+}
+
 export function initializeAvatarRenderer()
 {
 	if (actionsSorted === null)
@@ -190,7 +195,7 @@ export function loadAvatarClothingLibrary(library, loader)
 		{
 			loader
 				.add(libraryUrl)
-				.on("complete", () => application.getResource(libraryUrl, loader) !== undefined ? LOADED_LIBS[library] = application.getResource(libraryUrl, loader).data : undefined);
+				.on("complete", () => application.getResource(libraryUrl, loader) !== undefined ? onClothingLibraryLoaded(library, application.getResource(libraryUrl, loader).data) : undefined);
 
 			resolve();
 		}
@@ -203,7 +208,7 @@ export function loadAvatarClothingLibrary(library, loader)
 				.on("complete", () =>
 				{
 					LOADING_LIBS[library] = undefined;
-					LOADED_LIBS[library] = application.getResource(libraryUrl, loader).data;
+					onClothingLibraryLoaded(library, application.getResource(libraryUrl, loader).data);
 					resolve(LOADED_LIBS[library]);
 				})
 				.load();

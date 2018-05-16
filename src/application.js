@@ -1,4 +1,3 @@
-import { Avatar } from "./view/avatar/avatar.js";
 import { AvatarManager } from "./view/avatar/manager.js";
 import { Logger } from "./core/logging.js";
 import { LoadingView } from "./view/loading-view.js";
@@ -150,8 +149,8 @@ export class Application extends PIXI.utils.EventEmitter
 		this.stage.addChild(roomViewer);
 		this.stage.addChild(new InterfaceContainer());
 
-		roomViewer.addChild(avatars[0] = new Avatar(randomFigure(), "vertical", "full"));
-		roomViewer.addChild(avatars[1] = new Avatar(randomFigure(), "vertical", "full"));
+		roomViewer.addChild(avatars[0] = this.getManager(AvatarManager).newAvatar(randomFigure(), "vertical", "full"));
+		roomViewer.addChild(avatars[1] = this.getManager(AvatarManager).newAvatar(randomFigure(), "vertical", "full"));
 
 		roomViewer.addChild(furnis[0] = new Furni("throne"));
 
@@ -171,7 +170,7 @@ export class Application extends PIXI.utils.EventEmitter
 		avatars[1].on("click", () => avatars[1].figure = randomFigure());
 		avatars[1].on("click", () => roomViewer.centerEntity(avatars[1]));
 
-		// roomViewer.centerEntity(avatars[controllingAvatar]);
+		roomViewer.centerEntity(avatars[controllingAvatar]);
 
 		roomViewer.on("tile-click", evt => avatars[controllingAvatar].once("avatar-build", async () => current = await walkTo(roomViewer, current.avatar, current.cr, current.cc, evt.row, evt.column)));
 	}

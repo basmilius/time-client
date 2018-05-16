@@ -1,6 +1,6 @@
-import { Avatar } from "../../view/avatar/avatar.js";
 import { application } from "../../bootstrapper.js";
 import { interfaceResources } from "./interface.js";
+import { AvatarManager } from "../../view/avatar/manager.js";
 
 const memenuSize = 60;
 const memenuSizeHalf = Math.floor(memenuSize / 2);
@@ -28,7 +28,7 @@ export class MeMenu extends PIXI.Container
 		this._avatarHolder.on("pointerover", () => this.onAvatarHover());
 		this._avatarHolder.on("pointerout", () => this.onAvatarLeave());
 
-		this._avatar = new Avatar("", "vertical", "head");
+		this._avatar = application.getManager(AvatarManager).newAvatar("", "vertical", "head");
 		this.avatar.canPoof = false;
 		this.avatar.headDirection = 3;
 		this.avatar.position.x = -15;
