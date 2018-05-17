@@ -33,7 +33,6 @@ export class MeMenu extends PIXI.Container
 		this.avatar.headDirection = 3;
 		this.avatar.position.x = -15;
 		this.avatar.position.y = -11;
-		this.avatar.update();
 		this._avatarHolder.addChild(this.avatar);
 
 		this._chatBubble = new ChatBubble();

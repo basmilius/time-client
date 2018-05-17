@@ -6,6 +6,17 @@ const resourceLogo = "/resource/image/logo.png";
 class LoadingBar extends PIXI.Graphics
 {
 
+	get percentage()
+	{
+		return this._percentage;
+	}
+
+	set percentage(value)
+	{
+		this._percentage = value;
+		this.update();
+	}
+
 	constructor()
 	{
 		super();
@@ -15,11 +26,9 @@ class LoadingBar extends PIXI.Graphics
 		this.barThickness = 2;
 		this.barWidth = 300;
 		this.percentage = 0;
-
-		application.display.ticker.add(delta => this.onTick(delta));
 	}
 
-	onTick()
+	update()
 	{
 		this.clear();
 
@@ -49,6 +58,7 @@ export class LoadingView extends PIXI.Graphics
 	set percentage(value)
 	{
 		this.loadingBar.percentage = Math.round(value);
+		this.update();
 	}
 
 	constructor()
@@ -62,8 +72,6 @@ export class LoadingView extends PIXI.Graphics
 
 		this.init();
 		this.loadResources();
-
-		application.display.ticker.add(delta => this.onTick(delta));
 	}
 
 	init()
@@ -101,7 +109,7 @@ export class LoadingView extends PIXI.Graphics
 		application.loader.on("progress", state => this.percentage = state.progress);
 	}
 
-	onTick()
+	update()
 	{
 		const percentage = this.percentage;
 

@@ -33,6 +33,8 @@ export class AvatarManager extends Manager
 
 		this.avatars = [];
 		this.lastUpdate = 0;
+
+		application.once("application-loading-done", () => this.initializeRenderer());
 	}
 
 	async initialize()
@@ -59,15 +61,7 @@ export class AvatarManager extends Manager
 	{
 		initializeAvatarRenderer();
 
-		application.ticker.add(() =>
-		{
-			if (this.lastUpdate === -1 || (application.ticker.lastTime - this.lastUpdate) > 90)
-			{
-				this.lastUpdate = application.ticker.lastTime;
-
-				this.avatars.forEach(avatar => avatar.build());
-			}
-		});
+		application.ticker.add(() => this.onGameTick());
 	}
 
 	newAvatar(...options)
@@ -82,6 +76,16 @@ export class AvatarManager extends Manager
 	removeAvatar(avatar)
 	{
 		this.avatars = this.avatars.filter(a => a.id !== avatar.id);
+	}
+
+	onGameTick()
+	{
+		if (this.lastUpdate === -1 || (application.ticker.lastTime - this.lastUpdate) > 90)
+		{
+			this.lastUpdate = application.ticker.lastTime;
+
+			this.avatars.forEach(avatar => avatar.build());
+		}
 	}
 
 }

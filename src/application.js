@@ -5,11 +5,10 @@ import { Display } from "./display.js";
 import { I18nManager } from "./core/i18n/i18n.js";
 import { ConfigManager } from "./core/config/config.js";
 import { initialLoadingDelay } from "./preferences.js";
-import { InterfaceContainer, InterfaceManager } from "./ui/interface/interface.js";
-import { RoomView } from "./view/room/room-view.js";
-import { randomFigure, walkTo } from "./core/dev-utils.js";
-import { Furni, FurniManager } from "./view/furni/furni.js";
+import { InterfaceManager } from "./ui/interface/manager.js";
+import { FurniManager } from "./view/furni/furni.js";
 import { RoomManager } from "./view/room/manager.js";
+import { fakeGamePlay } from "./dev/gameplay.js";
 
 export class InitializerLoader extends PIXI.loaders.Loader
 {
@@ -136,43 +135,11 @@ export class Application extends PIXI.utils.EventEmitter
 		Logger.debug("Application", "Loading of manager data done!");
 		this.emit("application-loading-done");
 
-		this.getManager(AvatarManager).initializeRenderer();
-
 		delete this.loader;
 
 		this.stage.removeChild(this.loadingView);
 
-		let avatars = [undefined, undefined];
-		let furnis = [undefined];
-		let roomViewer = new RoomView();
-
-		this.stage.addChild(roomViewer);
-		this.stage.addChild(new InterfaceContainer());
-
-		roomViewer.addChild(avatars[0] = this.getManager(AvatarManager).newAvatar(randomFigure(), "vertical", "full"));
-		roomViewer.addChild(avatars[1] = this.getManager(AvatarManager).newAvatar(randomFigure(), "vertical", "full"));
-
-		roomViewer.addChild(furnis[0] = new Furni("throne"));
-
-		roomViewer.associateEntityToTile(avatars[0], 15, 0, 2);
-		roomViewer.associateEntityToTile(avatars[1], 8, 20, 2);
-
-		roomViewer.associateEntityToTile(furnis[0], 8, 21, 2);
-
-		let controllingAvatar = 0;
-		let current = {cr: 15, cc: 0, avatar: avatars[controllingAvatar]};
-
-		// avatars[0].addAction("Blow");
-		avatars[0].on("click", () => avatars[0].figure = randomFigure());
-		avatars[0].on("click", () => roomViewer.centerEntity(avatars[0]));
-
-		avatars[1].addAction("Wave");
-		avatars[1].on("click", () => avatars[1].figure = randomFigure());
-		avatars[1].on("click", () => roomViewer.centerEntity(avatars[1]));
-
-		roomViewer.centerEntity(avatars[controllingAvatar]);
-
-		roomViewer.on("tile-click", evt => avatars[controllingAvatar].once("avatar-build", async () => current = await walkTo(roomViewer, current.avatar, current.cr, current.cc, evt.row, evt.column)));
+		fakeGamePlay();
 	}
 
 	getResource(resource, loader = undefined)

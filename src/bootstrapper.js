@@ -22,7 +22,6 @@ export class Bootstrapper
 		PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
 
 		application.create();
-
 		application.on("application-can-run", () => application.run());
 
 		await application.initialize();

@@ -95,7 +95,6 @@ export class Avatar extends PIXI.Container
 		this.headDirection = this.direction;
 
 		this.build();
-
 		this.canPoof = true;
 	}
 
@@ -154,6 +153,11 @@ export class Avatar extends PIXI.Container
 
 	build()
 	{
+		if (this.isBuilding)
+			return;
+
+		this.isBuilding = true;
+
 		this.emit("avatar-build", this);
 		this.invalidate();
 
@@ -178,6 +182,8 @@ export class Avatar extends PIXI.Container
 		}
 
 		this.update();
+
+		this.isBuilding = false;
 	}
 
 	decideGeometry()
@@ -205,7 +211,7 @@ export class Avatar extends PIXI.Container
 	hasActivePartSet(id)
 	{
 		for (let action of this.actions)
-			if (action["activepartset"] === id)
+			if (action !== null && action["activepartset"] === id)
 				return true;
 
 		return false;
@@ -415,11 +421,17 @@ export class Avatar extends PIXI.Container
 			y: this._height / 2
 		};
 
+		if (action === null)
+			return;
+
 		const activePartSets = this.getActivePartSets(action);
 		const frame = ++this._frames[action.id] || 0;
 
 		const hiddenlayers = [];
 		const avatarParts = this._loading ? (loadingAvatar !== null ? loadingAvatar._parts : {}) : this._parts;
+
+		if (avatarParts === undefined)
+			return;
 
 		avatarParts.forEach(data => hiddenlayers.push(...data.hiddenlayers));
 
@@ -452,7 +464,7 @@ export class Avatar extends PIXI.Container
 				let partValidActions = getValidActionsForPart(partType);
 				let partFrames = getAnimationFrames(action.id, partType);
 
-				if (activePartSets.indexOf(partType) === -1)
+				if (activePartSets.indexOf(partTypeWithoutFlip) === -1)
 					continue;
 
 				if (this._sprites[partTypeWithoutFlip] === undefined)

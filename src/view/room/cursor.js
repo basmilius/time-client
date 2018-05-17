@@ -1,5 +1,4 @@
 import { tileHeight, tileHeightHalf, tileWidth, tileWidthHalf } from "./shared.js";
-import { withInstance } from "../../core/pixi-utils.js";
 
 export class TileCursor extends PIXI.Graphics
 {
@@ -15,24 +14,21 @@ export class TileCursor extends PIXI.Graphics
 			new PIXI.Point(0, tileHeight / 2)
 		];
 
-		this.lineStyle(4, 0xFFFFFF);
-		this.moveTo(points[0].x, points[0].y - 1);
-		this.lineTo(points[1].x, points[1].y - 1);
-		this.lineTo(points[2].x, points[2].y - 1);
-		this.lineTo(points[3].x, points[3].y - 1);
-		this.lineTo(points[0].x, points[0].y - 1);
+		this.lineStyle(4, 0x000000, 0.2);
+		this.moveTo(points[0].x, points[0].y);
+		this.lineTo(points[1].x, points[1].y);
+		this.lineTo(points[2].x, points[2].y);
+		this.lineTo(points[3].x, points[3].y);
+		this.lineTo(points[0].x, points[0].y);
 		this.endFill();
 
-		this.filters = [
-			withInstance(new PIXI.filters.DropShadowFilter(), shadow =>
-			{
-				shadow.color = 0x000000;
-				shadow.alpha = 0.2;
-				shadow.blur = 0;
-				shadow.distance = 2;
-				shadow.rotation = 90;
-			})
-		];
+		this.lineStyle(4, 0xFFFFFF);
+		this.moveTo(points[0].x, points[0].y - 2);
+		this.lineTo(points[1].x, points[1].y - 2);
+		this.lineTo(points[2].x, points[2].y - 2);
+		this.lineTo(points[3].x, points[3].y - 2);
+		this.lineTo(points[0].x, points[0].y - 2);
+		this.endFill();
 	}
 
 	hover(x, y, z)

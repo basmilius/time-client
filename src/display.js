@@ -46,7 +46,7 @@ export class Display extends PIXI.utils.EventEmitter
 	{
 		super();
 
-		this.dpi = 1;//window.devicePixelRatio;
+		this.dpi = 1;
 		this.mount = document.querySelector(stageElement);
 
 		if (this.mount === null)
@@ -57,7 +57,7 @@ export class Display extends PIXI.utils.EventEmitter
 		this.initApp();
 		this.initEvents();
 
-		this.ticker.add(() => frame++);
+		this.ticker.add(() => this.onTick());
 	}
 
 	initApp()
@@ -77,6 +77,19 @@ export class Display extends PIXI.utils.EventEmitter
 	initEvents()
 	{
 		window.addEventListener("resize", () => this.onWindowResize());
+	}
+
+	onTick()
+	{
+		frame++;
+
+		this.emit("tick");
+
+		if (frame % 12 === 0)
+		{
+			this.emit("tick-update");
+			this.stage.updateLayerOrder();
+		}
 	}
 
 	onWindowResize()

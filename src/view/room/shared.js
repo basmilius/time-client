@@ -20,6 +20,34 @@ export const StairsType = {
 	SouthWest: 4
 };
 
+export function getDistance(a, b)
+{
+	return Math.max(Math.abs(a.row - b.row), Math.abs(a.column - b.column));
+}
+
+export function getHeading(a, b)
+{
+	if (a.row === b.row && a.column === b.column)
+		return undefined;
+
+	if (b.row < a.row && b.column > a.column)
+		return 1;
+	else if (b.row === a.row && b.column > a.column)
+		return 2;
+	else if (b.row > a.row && b.column > a.column)
+		return 3;
+	else if (b.row > a.row && b.column === a.column)
+		return 4;
+	else if (b.row > a.row && b.column < a.column)
+		return 5;
+	else if (b.row === a.row && b.column < a.column)
+		return 6;
+	else if (b.row < a.row && b.column < a.column)
+		return 7;
+	else
+		return 0;
+}
+
 export function getDoorDirection(tiles, row, column)
 {
 	if (!isDoor(tiles, row, column))
@@ -103,8 +131,8 @@ export function needsWallC(tiles, row, column)
 
 	let cy = row;
 
-	while (cy > 0)
-		if (getTile(tiles, --cy, column) !== null && !isDoor(tiles, row, cy))
+	while (cy > -1)
+		if (getTile(tiles, --cy, column) !== null && !isDoor(tiles, cy, column))
 			return false;
 
 	return !((getTile(tiles, row - 1, column - 1) !== null && !isDoor(tiles, row - 1, column - 1)) || (getTile(tiles, row - 1, column + 1) !== null && !isDoor(tiles, row - 1, column + 1)));
@@ -117,7 +145,7 @@ export function needsWallR(tiles, row, column)
 
 	let cx = column;
 
-	while (cx > 0)
+	while (cx > -1)
 		if (getTile(tiles, row, --cx) !== null && !isDoor(tiles, row, cx))
 			return false;
 

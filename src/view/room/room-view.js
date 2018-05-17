@@ -1,15 +1,14 @@
 import { simpleDraggable, withInstance } from "../../core/pixi-utils.js";
 import { application } from "../../bootstrapper.js";
 import { TileCursor } from "./cursor.js";
-import { heightMaps } from "./dev.js";
 import { getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, hitAreaOffset, isDoor, needsWallC, needsWallR, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
 import { Tile, TileBase } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
 
 const debugDoor = true;
-const debugWalls = true;
+const debugWalls = false;
 
-export class RoomView extends PIXI.Graphics
+export class RoomView extends PIXI.Container
 {
 
 	get entities()
@@ -42,6 +41,8 @@ export class RoomView extends PIXI.Graphics
 	{
 		super();
 
+		this.z = 1000;
+
 		this._entities = [];
 		this._heightmap = {};
 		this._tiles = {};
@@ -62,15 +63,10 @@ export class RoomView extends PIXI.Graphics
 		this.tileCursor.visible = false;
 
 		simpleDraggable(this);
-		this.prepareHeightmap(heightMaps[5]);
-
-		application.ticker.add(() => this.onTick());
 	}
 
 	clearEverything()
 	{
-		this.clear();
-
 		while (this.children[0])
 			this.removeChild(this.children[0]);
 
@@ -123,7 +119,7 @@ export class RoomView extends PIXI.Graphics
 
 				let x = this.getX(row, column);
 				let y = this.getY(row, column);
-				let z = (row * this.columns) + column; //this.getZ(row, column);
+				let z = this.getRealZ(row, column, 1);
 
 				if (row === 1 && column === 21)
 					console.log(wallC, wallR, door, isDoor(tiles, row - 1, column));
@@ -133,6 +129,7 @@ export class RoomView extends PIXI.Graphics
 					let wallImplementations = [];
 					let isDoorColumn = isDoor(tiles, row - 1, column);
 					let isDoorRow = isDoor(tiles, row, column - 1);
+					let isADoor = isDoorColumn || isDoorRow;
 					let top = Math.abs(this.highest - tileHeightLocal);
 
 					if (wallC && wallR)
@@ -150,8 +147,6 @@ export class RoomView extends PIXI.Graphics
 						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow));
 					}
 
-					let wallZ = isDoorColumn || isDoorRow ? (z + 2) : (z - 1);
-
 					for (const wi of wallImplementations)
 					{
 						this.addChild(withInstance(wi, wall =>
@@ -160,7 +155,7 @@ export class RoomView extends PIXI.Graphics
 
 							wall.x = x + tileWidthHalf;
 							wall.y = y + (stairsType !== undefined ? tileHeight : 0);
-							wall.z = wallZ;
+							wall.z = this.getRealZ(row, column, isADoor ? 3 : 0);
 						}));
 					}
 				}
@@ -205,6 +200,13 @@ export class RoomView extends PIXI.Graphics
 		this.emit("room-view-ready");
 	}
 
+	addEntityToTile(entity, row, column, h)
+	{
+		this.addChild(entity);
+
+		this.associateEntityToTile(entity, row, column, h);
+	}
+
 	associateEntityToTile(entity, row, column, h = 0)
 	{
 		let pos = this.getEntityPosition(entity, row, column, h);
@@ -212,6 +214,8 @@ export class RoomView extends PIXI.Graphics
 		entity.position.x = pos.x;
 		entity.position.y = pos.y;
 		entity.z = pos.z;
+
+		this.updateLayerOrder();
 	}
 
 	centerEntity(entity, animate = true)
@@ -285,9 +289,20 @@ export class RoomView extends PIXI.Graphics
 		let z = this.getZ(row, column + 2, 5) + h;
 
 		if (isDoor(this.tiles, row, column))
-			z = this.getRealZ(row, column, h);
+			z = this.getRealZ(row, column, 4);
 
 		return {x, y, z, isStairs};
+	}
+
+	getRandomTile()
+	{
+		let row = Math.floor(Math.random() * this.rows);
+		let column = Math.floor(Math.random() * this.columns);
+
+		if (!this.isValidTile(row, column))
+			return this.getRandomTile();
+
+		return {row, column};
 	}
 
 	getTile(row, column)
@@ -337,9 +352,9 @@ export class RoomView extends PIXI.Graphics
 		return (row * this.columns) + column + add;
 	}
 
-	onTick()
+	isValidTile(row, column)
 	{
-		this.updateLayerOrder();
+		return this.getTile(row, column) !== undefined;
 	}
 
 	onTileClick(evt)
@@ -355,7 +370,8 @@ export class RoomView extends PIXI.Graphics
 
 			this.currentHover = [evt.row, evt.column];
 			this.tileCursor.visible = true;
-			this.tileCursor.hover(x, y, this.getRealZ(evt.row, evt.column, 1));
+			this.tileCursor.hover(x, y, this.getRealZ(evt.row, evt.column, 2));
+			this.updateLayerOrder();
 		}, 1);
 	}
 
