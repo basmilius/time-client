@@ -21,13 +21,13 @@
 		"babel-preset-env": "^1.7.0",
 		"babel-preset-es2015-rollup": "^3.0.0",
 		"babel-preset-stage-1": "^6.24.1",
-		"rollup": "^0.59.0",
-		"rollup-plugin-babel": "^3.0.4",
-		"rollup-plugin-babel-minify": "^4.0.0",
+		"rollup": "^0.64.1",
+		"rollup-plugin-babel": "^3.0.7",
+		"rollup-plugin-babel-minify": "^5.0.0",
 		"rollup-plugin-javascript-obfuscator": "^1.0.1",
 		"rollup-plugin-multi-entry": "^2.0.2",
 		"rollup-plugin-node-resolve": "^3.3.0",
-		"rollup-plugin-uglify": "^3.0.0"
+		"rollup-plugin-uglify": "^4.0.0"
 	},
 	"repository": {
 		"type": "git",

@@ -1,26 +1,28 @@
-import { Toolbar } from "./toolbar.js";
+import { BottomBar, bottomBarHeight } from "./bottombar.js";
 import { MeMenu } from "./memenu.js";
+import { Easings } from "../ui.js";
 
 export const interfaceResources = {
 	chatBubble: {
 		left: "./resource/image/interface/chat-bubble/left.png",
 		middle: "./resource/image/interface/chat-bubble/middle.png",
 		right: "./resource/image/interface/chat-bubble/right.png"
+	},
+	bottomBar: {
+		background: "./resource/image/interface/bottom-bar/background.png",
+		navigator: "./resource/image/interface/bottom-bar/navigator.png",
+		friends: "./resource/image/interface/bottom-bar/friends.png",
+		friendsInvited: "./resource/image/interface/bottom-bar/friends-invited.png",
+		chat: "./resource/image/interface/bottom-bar/chat.png",
+		chatMessages: "./resource/image/interface/bottom-bar/chat-messages.png",
+		catalogue: "./resource/image/interface/bottom-bar/catalogue.png",
+		inventory: "./resource/image/interface/bottom-bar/inventory.png",
+		help: "./resource/image/interface/bottom-bar/help.png"
 	}
 };
 
 export class InterfaceContainer extends PIXI.Container
 {
-
-	get memenu()
-	{
-		return this._memenu;
-	}
-
-	get toolbar()
-	{
-		return this._toolbar;
-	}
 
 	constructor()
 	{
@@ -28,13 +30,24 @@ export class InterfaceContainer extends PIXI.Container
 
 		this.z = 100000;
 
-		this._memenu = new MeMenu();
-		this._toolbar = new Toolbar();
+		this.init();
+		this.hello();
+	}
 
-		this.addChild(this.memenu);
-		this.addChild(this.toolbar);
+	init()
+	{
+		this.bottomBar = new BottomBar();
+		this.addChild(this.bottomBar);
+	}
 
-		this.memenu.avatar.figure = "hr-3163-61.cc-3075-73.ca-3175-92.hd-195-3.ch-3030-92.sh-3016-64.lg-3116-110-92";
+	hello()
+	{
+		anime({
+			targets: this.bottomBar,
+			duration: 300,
+			easing: Easings.SwiftOut,
+			y: [this.bottomBar.y + bottomBarHeight, this.bottomBar.y]
+		})
 	}
 
 }

@@ -42,11 +42,16 @@ export class Display extends PIXI.utils.EventEmitter
 		return this.renderer.width / this.dpi;
 	}
 
+	get size()
+	{
+		return {width: this.width, height: this.height};
+	}
+
 	constructor()
 	{
 		super();
 
-		this.dpi = 1;
+		this.dpi = window.devicePixelRatio;
 		this.mount = document.querySelector(stageElement);
 
 		if (this.mount === null)
@@ -57,14 +62,14 @@ export class Display extends PIXI.utils.EventEmitter
 		this.initApp();
 		this.initEvents();
 
-		this.ticker.add(() => this.onTick());
+		this.ticker.add(delta => this.onTick(delta));
 	}
 
 	initApp()
 	{
 		this.app = new PIXI.Application({
-			height: window.innerHeight / this.dpi,
-			width: window.innerWidth / this.dpi,
+			height: window.innerHeight,
+			width: window.innerWidth,
 			antialiasing: false,
 			transparent: false,
 			resolution: this.dpi,
@@ -72,6 +77,9 @@ export class Display extends PIXI.utils.EventEmitter
 		});
 
 		this.mount.appendChild(this.view);
+
+		this.view.style.height = window.innerHeight + "px";
+		this.view.style.width = window.innerWidth + "px";
 	}
 
 	initEvents()
@@ -79,23 +87,25 @@ export class Display extends PIXI.utils.EventEmitter
 		window.addEventListener("resize", () => this.onWindowResize());
 	}
 
-	onTick()
+	onTick(delta)
 	{
 		frame++;
 
-		this.emit("tick");
+		this.emit("tick", delta);
 
 		if (frame % 12 === 0)
-		{
-			this.emit("tick-update");
-			this.stage.updateLayerOrder();
-		}
+			this.emit("tick-update", delta);
+
+		this.stage.updateLayerOrder();
 	}
 
 	onWindowResize()
 	{
-		this.renderer.resize(window.innerWidth / this.dpi, window.innerHeight / this.dpi);
+		this.renderer.resize(window.innerWidth, window.innerHeight);
 		this.emit("resize");
+
+		this.view.style.height = window.innerHeight + "px";
+		this.view.style.width = window.innerWidth + "px";
 	}
 
 }

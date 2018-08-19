@@ -3,7 +3,7 @@ const babel = require("rollup-plugin-babel");
 const multiEntry = require("rollup-plugin-multi-entry");
 const nodeResolve = require("rollup-plugin-node-resolve");
 const obfuscate = require("rollup-plugin-javascript-obfuscator");
-const uglify = require("rollup-plugin-uglify");
+const {uglify} = require("rollup-plugin-uglify");
 const minify = require("rollup-plugin-babel-minify");
 
 const pkg = require("../package.json");
@@ -37,22 +37,22 @@ async function run()
 				},
 				removeConsole: true,
 				removeDebugger: true
-			})
+			}),
 			// obfuscate(),
-			// uglify({
-			// 	compress: {
-			// 		drop_console: true,
-			// 		drop_debugger: true,
-			// 		keep_fargs: false,
-			// 		keep_infinity: true,
-			// 		passes: 1,
-			// 		toplevel: true
-			// 	},
-			// 	mangle: {
-			// 		properties: false,
-			// 		toplevel: true
-			// 	}
-			// })
+			uglify({
+				compress: {
+					drop_console: true,
+					drop_debugger: true,
+					keep_fargs: false,
+					keep_infinity: true,
+					passes: 1,
+					toplevel: true
+				},
+				mangle: {
+					properties: false,
+					toplevel: true
+				}
+			})
 		]
 	});
 

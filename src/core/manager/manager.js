@@ -38,4 +38,24 @@ export class Manager
 	{
 	}
 
+	log(...data)
+	{
+		console.log(this.name, ...data);
+	}
+
+	logDebug(...data)
+	{
+		console.debug(this.name, ...data);
+	}
+
+	logError(...data)
+	{
+		console.error(this.name, ...data);
+	}
+
+	logWarning(...data)
+	{
+		console.warn(this.name, ...data);
+	}
+
 }

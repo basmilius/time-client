@@ -9,6 +9,7 @@ import { InterfaceManager } from "./ui/interface/manager.js";
 import { FurniManager } from "./view/furni/furni.js";
 import { RoomManager } from "./view/room/manager.js";
 import { fakeGamePlay } from "./dev/gameplay.js";
+import { HotelViewManager } from "./view/hotel-view.js";
 
 export class InitializerLoader extends PIXI.loaders.Loader
 {
@@ -87,6 +88,7 @@ export class Application extends PIXI.utils.EventEmitter
 
 		this.addManager(new AvatarManager());
 		this.addManager(new FurniManager());
+		this.addManager(new HotelViewManager());
 		this.addManager(new RoomManager());
 
 		this.addManager(new InterfaceManager());

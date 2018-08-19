@@ -1,10 +1,13 @@
 import { application } from "../bootstrapper.js";
-import { RoomManager } from "../view/room/manager.js";
-import { heightMaps } from "./rooms.js";
 import { AvatarManager } from "../view/avatar/manager.js";
-import { randomFigure } from "./avatars.js";
 import { Furni } from "../view/furni/furni.js";
+import { RoomManager } from "../view/room/manager.js";
 import { getDistance, getHeading } from "../view/room/shared.js";
+import { randomFigure } from "./avatars.js";
+import { heightMaps } from "./rooms.js";
+import { NavigatorWindow } from "../ui/navigator/window.js";
+import { InterfaceManager } from "../ui/interface/manager.js";
+import { HotelViewManager } from "../view/hotel-view.js";
 
 let generateFurnis = 0;
 let generateHumans = 1;
@@ -16,34 +19,50 @@ let controllingHuman = 0;
 
 export function fakeGamePlay()
 {
-	const avatarManager = application.getManager(AvatarManager);
-	const roomManager = application.getManager(RoomManager);
+	application.getManager(HotelViewManager).hotelView.open();
 
-	roomManager.showRoomViewer(heightMaps[5]);
+	const nav = new NavigatorWindow();
+	application.stage.addChild(nav);
 
-	for (let i = 0; i < generateFurnis; i++)
+	application.getManager(InterfaceManager).interface.bottomBar.navigatorButton.on("click", () =>
 	{
-		let furni = new Furni("throne");
-		let position = roomManager.roomViewer.getRandomTile();
+		if (nav.opened)
+			nav.close();
+		else
+			nav.open();
+	});
 
-		furnis.push(furni);
-
-		roomManager.roomViewer.addEntityToTile(furni, position.row, position.column);
-	}
-
-	for (let i = 0; i < generateHumans; i++)
+	if (true === false)
 	{
-		let human = avatarManager.newAvatar(randomFigure());
-		let position = roomManager.roomViewer.getRandomTile();
+		const avatarManager = application.getManager(AvatarManager);
+		const roomManager = application.getManager(RoomManager);
 
-		human.direction = human.headDirection = Math.floor(Math.random() * 8) % 8;
+		roomManager.showRoomViewer(heightMaps[5]);
 
-		humans.push(new RoomUser(roomManager.roomViewer, human, position.row, position.column));
+		for (let i = 0; i < generateFurnis; i++)
+		{
+			let furni = new Furni("throne");
+			let position = roomManager.roomViewer.getRandomTile();
 
-		roomManager.roomViewer.addEntityToTile(human, position.row, position.column);
+			furnis.push(furni);
+
+			roomManager.roomViewer.addEntityToTile(furni, position.row, position.column);
+		}
+
+		for (let i = 0; i < generateHumans; i++)
+		{
+			let human = avatarManager.newAvatar(randomFigure());
+			let position = roomManager.roomViewer.getRandomTile();
+
+			human.direction = human.headDirection = Math.floor(Math.random() * 8) % 8;
+
+			humans.push(new RoomUser(roomManager.roomViewer, human, position.row, position.column));
+
+			roomManager.roomViewer.addEntityToTile(human, position.row, position.column);
+		}
+
+		roomManager.roomViewer.on("tile-click", evt => humans[controllingHuman].walkTo(evt.row, evt.column));
 	}
-
-	roomManager.roomViewer.on("tile-click", evt => humans[controllingHuman].walkTo(evt.row, evt.column));
 }
 
 class RoomUser

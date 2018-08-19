@@ -21,8 +21,8 @@ class LoadingBar extends PIXI.Graphics
 	{
 		super();
 
-		this.barColor = 0x888888;
-		this.barHeight = 12;
+		this.barColor = 0x454c5d;
+		this.barHeight = 18;
 		this.barThickness = 2;
 		this.barWidth = 300;
 		this.percentage = 0;
@@ -78,11 +78,12 @@ export class LoadingView extends PIXI.Graphics
 	{
 		const style = new PIXI.TextStyle({
 			align: "center",
-			fontFamily: "Segoe UI",
-			fontSize: 13,
-			fill: "white",
+			fontFamily: "proxima-nova",
+			fontSize: 15,
+			fontWeight: 300,
+			fill: 0x989ca5,
 			wordWrap: true,
-			wordWrapWidth: 360
+			wordWrapWidth: this.loadingBar.barWidth
 		});
 
 		this.text = new PIXI.Text("", style);
@@ -104,9 +105,12 @@ export class LoadingView extends PIXI.Graphics
 		this.addChild(this.loadingBar);
 		this.addChild(this.text);
 
-		this.emit("loader-ready");
+		this.logo.visible = false;
 
 		application.loader.on("progress", state => this.percentage = state.progress);
+
+		this.update();
+		this.emit("loader-ready");
 	}
 
 	update()
@@ -118,23 +122,21 @@ export class LoadingView extends PIXI.Graphics
 		const height = application.display.height;
 		const width = application.display.width;
 
-		this.beginFill(0x0);
+		this.beginFill(0x000000);
 		this.drawRect(0, 0, width, height);
 		this.endFill();
 
-		this.loadingBar.position.x = Math.round((width / 2) - (this.loadingBar.width / 2));
-		this.loadingBar.position.y = height - (this.loadingBar.height + 91);
+		this.loadingBar.position.x = (width / 2) - (this.loadingBar.barWidth / 2);
+		this.loadingBar.position.y = height - (this.loadingBar.barHeight + 24);
 
-		if (this.logo !== null)
-		{
-			this.logo.x = Math.round((width / 2) - (this.logo.width / 2));
-			this.logo.y = Math.round((height / 2) - (this.logo.height / 2));
-		}
+		this.logo.visible = true;
+		this.logo.x = Math.round((width / 2) - (this.logo.width / 2));
+		this.logo.y = Math.round((height / 2) - (this.logo.height / 2));
 
 		this.text.text = application.getManager(I18nManager).getString("loading-view.starting-up", {percentage}, "");
 
 		this.text.position.set(
-			Math.floor((width / 2) - (this.text.width / 2)),
+			(this.loadingBar.position.x + (this.loadingBar.barWidth / 2)) - (this.text.width / 2),
 			this.loadingBar.position.y - 30
 		);
 	}

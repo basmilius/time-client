@@ -30,6 +30,15 @@ export class InterfaceManager extends Manager
 	{
 		await super.initialize();
 
+		this.loader.add(interfaceResources.bottomBar.background);
+		this.loader.add(interfaceResources.bottomBar.catalogue);
+		this.loader.add(interfaceResources.bottomBar.chat);
+		this.loader.add(interfaceResources.bottomBar.chatMessages);
+		this.loader.add(interfaceResources.bottomBar.friends);
+		this.loader.add(interfaceResources.bottomBar.friendsInvited);
+		this.loader.add(interfaceResources.bottomBar.help);
+		this.loader.add(interfaceResources.bottomBar.inventory);
+		this.loader.add(interfaceResources.bottomBar.navigator);
 		this.loader.add(interfaceResources.chatBubble.left);
 		this.loader.add(interfaceResources.chatBubble.middle);
 		this.loader.add(interfaceResources.chatBubble.right);

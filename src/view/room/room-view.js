@@ -5,7 +5,7 @@ import { getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplemen
 import { Tile, TileBase } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
 
-const debugDoor = true;
+const debugDoor = false;
 const debugWalls = false;
 
 export class RoomView extends PIXI.Container
@@ -63,6 +63,8 @@ export class RoomView extends PIXI.Container
 		this.tileCursor.visible = false;
 
 		simpleDraggable(this);
+
+		// application.display.on("tick", delta => this.rotation = this.rotation + (.036 * delta) % 1);
 	}
 
 	clearEverything()
@@ -120,9 +122,6 @@ export class RoomView extends PIXI.Container
 				let x = this.getX(row, column);
 				let y = this.getY(row, column);
 				let z = this.getRealZ(row, column, 1);
-
-				if (row === 1 && column === 21)
-					console.log(wallC, wallR, door, isDoor(tiles, row - 1, column));
 
 				if (wall)
 				{
