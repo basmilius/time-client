@@ -14,35 +14,32 @@ class LoadingBar extends PIXI.Graphics
 	set percentage(value)
 	{
 		this._percentage = value;
-		this.update();
+		this.render();
 	}
 
 	constructor()
 	{
 		super();
 
-		this.barColor = 0x454c5d;
-		this.barHeight = 18;
+		this.barHeight = 30;
 		this.barThickness = 2;
 		this.barWidth = 300;
 		this.percentage = 0;
 	}
 
-	update()
+	render()
 	{
 		this.clear();
 
-		this.beginFill(this.barColor);
-		this.drawRect(0, 0, Math.round(this.percentage / 100 * this.barWidth), this.barHeight);
+		this.beginFill(0x000000);
+		this.lineStyle(this.barThickness, 0x434343);
+		this.drawRoundedRect(0, 0, this.barWidth, this.barHeight, 6);
 		this.endFill();
 
-		this.lineStyle(this.barThickness, this.barColor);
-
-		this.moveTo(-this.barThickness, -this.barThickness);
-		this.lineTo(this.barWidth + this.barThickness, -this.barThickness);
-		this.lineTo(this.barWidth + this.barThickness, this.barHeight + this.barThickness);
-		this.lineTo(-this.barThickness, this.barHeight + this.barThickness);
-		this.lineTo(-this.barThickness, -this.barThickness);
+		this.beginFill(0x575757);
+		this.lineStyle(null);
+		this.drawRoundedRect(this.barThickness, this.barThickness, Math.round(this.percentage / 100 * (this.barWidth - this.barThickness * 2)), this.barHeight - this.barThickness * 2, 4);
+		this.endFill();
 	}
 
 }
@@ -58,7 +55,7 @@ export class LoadingView extends PIXI.Graphics
 	set percentage(value)
 	{
 		this.loadingBar.percentage = Math.round(value);
-		this.update();
+		this.render();
 	}
 
 	constructor()
@@ -81,12 +78,14 @@ export class LoadingView extends PIXI.Graphics
 			fontFamily: "proxima-nova",
 			fontSize: 15,
 			fontWeight: 300,
-			fill: 0x989ca5,
+			fill: 0xFFFFFF,
 			wordWrap: true,
 			wordWrapWidth: this.loadingBar.barWidth
 		});
 
 		this.text = new PIXI.Text("", style);
+
+		application.display.on("resize", () => this.render());
 	}
 
 	loadResources()
@@ -101,7 +100,6 @@ export class LoadingView extends PIXI.Graphics
 		this.logo = new PIXI.Sprite(application.getResource(resourceLogo, this.loader).texture);
 
 		this.addChild(this.logo);
-
 		this.addChild(this.loadingBar);
 		this.addChild(this.text);
 
@@ -109,11 +107,11 @@ export class LoadingView extends PIXI.Graphics
 
 		application.loader.on("progress", state => this.percentage = state.progress);
 
-		this.update();
+		this.render();
 		this.emit("loader-ready");
 	}
 
-	update()
+	render()
 	{
 		const percentage = this.percentage;
 
@@ -127,7 +125,7 @@ export class LoadingView extends PIXI.Graphics
 		this.endFill();
 
 		this.loadingBar.position.x = (width / 2) - (this.loadingBar.barWidth / 2);
-		this.loadingBar.position.y = height - (this.loadingBar.barHeight + 24);
+		this.loadingBar.position.y = height - (this.loadingBar.barHeight + 60);
 
 		this.logo.visible = true;
 		this.logo.x = Math.round((width / 2) - (this.logo.width / 2));

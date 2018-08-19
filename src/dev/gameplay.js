@@ -32,6 +32,24 @@ export function fakeGamePlay()
 			nav.open();
 	});
 
+	application.getManager(InterfaceManager).interface.bottomBar.friendsButton.on("click", () =>
+	{
+		const roomManager = application.getManager(RoomManager);
+
+		if (application.getManager(HotelViewManager).hotelView.opened)
+		{
+			application.getManager(HotelViewManager).hotelView.close();
+
+			setTimeout(() => roomManager.showRoomViewer(heightMaps[4]), 300);
+		}
+		else
+		{
+			application.getManager(HotelViewManager).hotelView.open();
+
+			roomManager.removeRoomViewer();
+		}
+	});
+
 	if (true === false)
 	{
 		const avatarManager = application.getManager(AvatarManager);

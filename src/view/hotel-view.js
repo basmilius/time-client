@@ -11,6 +11,11 @@ export const hotelViewAssets = {
 export class HotelView extends PIXI.Graphics
 {
 
+	get opened()
+	{
+		return this.visible;
+	}
+
 	constructor()
 	{
 		super();

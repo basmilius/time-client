@@ -52,6 +52,11 @@ export class RoomManager extends Manager
 		application.display.stage.addChild(this.roomViewer);
 	}
 
+	removeRoomViewer()
+	{
+		application.display.stage.removeChild(this.roomViewer);
+	}
+
 	showRoomViewer(heightmap)
 	{
 		this.ensureRoomViewerIsMounted();
