@@ -73,7 +73,9 @@ export class Display extends PIXI.utils.EventEmitter
 			antialiasing: false,
 			transparent: false,
 			resolution: this.dpi,
-			roundPixels: false
+			roundPixels: false,
+			powerPreference: "high-performance",
+			forceFXAA: true
 		});
 
 		this.mount.appendChild(this.view);

@@ -40,7 +40,11 @@ export function fakeGamePlay()
 		{
 			application.getManager(HotelViewManager).hotelView.close();
 
-			setTimeout(() => roomManager.showRoomViewer(heightMaps[4]), 300);
+			setTimeout(() =>
+			{
+				roomManager.roomViewer.on("room-view-ready", () => roomManager.roomViewer.animateBuildingTiles());
+				roomManager.showRoomViewer(heightMaps[Math.floor(Math.random() * heightMaps.length)]);
+			}, 300);
 		}
 		else
 		{
@@ -49,6 +53,8 @@ export function fakeGamePlay()
 			roomManager.removeRoomViewer();
 		}
 	});
+
+	application.getManager(InterfaceManager).interface.bottomBar.friendsButton.emit("click");
 
 	if (true === false)
 	{

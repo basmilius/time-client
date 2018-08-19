@@ -206,6 +206,28 @@ export class RoomView extends PIXI.Container
 		this.associateEntityToTile(entity, row, column, h);
 	}
 
+	animateBuildingTiles()
+	{
+		// TODO(Bas, 2018-08-19): Give this another try :)
+
+		// for(let row = 0; row < this.rows; row++)
+		// {
+		// 	for(let column = 0; column < this.columns; column++)
+		// 	{
+		// 		if (this.tiles[row][column] === undefined)
+		// 			continue;
+		//
+		// 		anime({
+		// 			targets: this.tiles[row][column],
+		// 			delay: (row + column) * 50,
+		// 			duration: 300,
+		// 			easing: Easings.SwiftOut,
+		// 			alpha: [0, 1]
+		// 		});
+		// 	}
+		// }
+	}
+
 	associateEntityToTile(entity, row, column, h = 0)
 	{
 		let pos = this.getEntityPosition(entity, row, column, h);

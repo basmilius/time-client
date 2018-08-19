@@ -55,7 +55,7 @@ export class HotelView extends PIXI.Graphics
 
 		anime({
 			targets: this.skyline,
-			delay: 150,
+			delay: 75,
 			duration: 750,
 			easing: Easings.SwiftOut,
 			alpha: [0, 1],
@@ -64,7 +64,7 @@ export class HotelView extends PIXI.Graphics
 
 		anime({
 			targets: this.hotel,
-			delay: 225,
+			delay: 150,
 			duration: 750,
 			easing: Easings.SwiftOut,
 			y: [height, this.hotel.y]
