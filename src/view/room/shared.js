@@ -1,24 +1,20 @@
 import { StairsSouth, StairsSouthEast, StairsSouthWest, Tile } from "./tiles.js";
 
+const HeadingNorthEast = 0;
+const HeadingNorthWest = 1;
+const HeadingSouthEast = 2;
+const HeadingSouthWest = 3;
+
+const StairsTypeSouth = 3;
+const StairsTypeSouthEast = 2;
+const StairsTypeSouthWest = 4;
+
 export const hitAreaOffset = 5000;
 
 export const tileHeight = 32;
 export const tileHeightHalf = tileHeight / 2;
 export const tileWidth = 64;
 export const tileWidthHalf = tileWidth / 2;
-
-export const Heading = {
-	NorthEast: 0,
-	NorthWest: 1,
-	SouthEast: 2,
-	SouthWest: 3
-};
-
-export const StairsType = {
-	South: 3,
-	SouthEast: 2,
-	SouthWest: 4
-};
 
 export function getDistance(a, b)
 {
@@ -53,7 +49,7 @@ export function getDoorDirection(tiles, row, column)
 	if (!isDoor(tiles, row, column))
 		return null;
 
-	return [Heading.NorthEast, Heading.NorthWest, Heading.SouthEast, Heading.SouthWest][getSurroundings(tiles, row, column).findIndex(t => t !== null)];
+	return [HeadingNorthEast, HeadingNorthWest, HeadingSouthEast, HeadingSouthWest][getSurroundings(tiles, row, column).findIndex(t => t !== null)];
 }
 
 export function getStairsType(tiles, row, column)
@@ -62,15 +58,15 @@ export function getStairsType(tiles, row, column)
 	let [tileNorthEast, tileNorthWest, tileSouthEast, tileSouthWest] = getSurroundings(tiles, row, column);
 
 	if (tileNorthEast !== null && tileNorthWest !== null && Math.abs(tileHeight - tileNorthEast) === 1 && Math.abs(tileHeight - tileNorthWest) === 1)
-		return StairsType.South;
+		return StairsTypeSouth;
 	else if (tileNorthWest !== null && Math.abs(tileHeight - tileNorthWest) === 1)
-		return StairsType.SouthEast;
+		return StairsTypeSouthEast;
 	else if (tileNorthEast !== null && Math.abs(tileHeight - tileNorthEast) === 1)
-		return StairsType.SouthWest;
+		return StairsTypeSouthWest;
 
 	// TODO: Other stairs.
 
-	return undefined;
+	return -1;
 }
 
 export function getSurroundings(tiles, row, column)
@@ -102,15 +98,15 @@ export function getTileHeightIndex(char)
 	return ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"].indexOf(char);
 }
 
-export function getTileImplementation(stairsType = undefined)
+export function getTileImplementation(type = -1)
 {
-	if (stairsType === StairsType.South)
+	if (type === StairsTypeSouth)
 		return StairsSouth;
 
-	if (stairsType === StairsType.SouthEast)
+	if (type === StairsTypeSouthEast)
 		return StairsSouthEast;
 
-	if (stairsType === StairsType.SouthWest)
+	if (type === StairsTypeSouthWest)
 		return StairsSouthWest;
 
 	return Tile;

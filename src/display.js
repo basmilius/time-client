@@ -75,7 +75,7 @@ export class Display extends PIXI.utils.EventEmitter
 			resolution: this.dpi,
 			roundPixels: false,
 			powerPreference: "high-performance",
-			forceFXAA: true
+			forceFXAA: false
 		});
 
 		this.mount.appendChild(this.view);

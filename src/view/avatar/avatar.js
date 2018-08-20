@@ -44,6 +44,10 @@ export class Avatar extends PIXI.Container
 			return;
 
 		this._figure = new FigureString(value);
+
+		if (!this.initialBuild)
+			this.build();
+
 		this.poof();
 	}
 
@@ -73,9 +77,11 @@ export class Avatar extends PIXI.Container
 
 		setInteractive(this);
 
+		this.initialBuild = true;
 		this.canPoof = false;
 		this.id = "avatar-" + window.performance.now();
 		this.loader = new PIXI.loaders.Loader();
+		this.needsUpdate = false;
 		this.partContainer = new PIXI.Container();
 
 		this.addChild(this.partContainer);
@@ -96,6 +102,7 @@ export class Avatar extends PIXI.Container
 
 		this.build();
 		this.canPoof = true;
+		this.initialBuild = false;
 	}
 
 	addAction(action)
@@ -157,6 +164,7 @@ export class Avatar extends PIXI.Container
 			return;
 
 		this.isBuilding = true;
+		this.needsUpdate = true;
 
 		this.emit("avatar-build", this);
 		this.invalidate();
@@ -377,16 +385,8 @@ export class Avatar extends PIXI.Container
 
 	render()
 	{
-		if (this._loading)
-		{
-			const cmf = new PIXI.filters.AlphaFilter();
-			cmf.alpha = 0.8;
-			this.filters = [cmf];
-		}
-		else
-		{
-			this.filters = [];
-		}
+		this.partContainer.cacheAsBitmap = false;
+		this.alpha = this._loading ? 0.8 : 1.0;
 
 		let draworderId = "std";
 
@@ -406,10 +406,15 @@ export class Avatar extends PIXI.Container
 		for (let type of draworder)
 			if (this._sprites[type] !== undefined)
 				this._sprites[type].forEach(part => this.partContainer.addChild(part));
+
+		this.partContainer.cacheAsBitmap = true;
 	}
 
 	update()
 	{
+		if (!this.needsUpdate)
+			return;
+
 		this.actions.forEach(action => this.updateAction(action));
 		this.render();
 	}

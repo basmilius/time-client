@@ -4,6 +4,7 @@ import { TileCursor } from "./cursor.js";
 import { getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, hitAreaOffset, isDoor, needsWallC, needsWallR, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
 import { Tile, TileBase } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
+import { Easings } from "../../ui/ui.js";
 
 const debugDoor = false;
 const debugWalls = false;
@@ -99,6 +100,8 @@ export class RoomView extends PIXI.Container
 		this.columns = tiles[0].length;
 		this.rows = tiles.length;
 
+		this.doors = [];
+
 		for (let row = 0; row < tiles.length; row++)
 		{
 			this._tiles[row] = {};
@@ -131,6 +134,9 @@ export class RoomView extends PIXI.Container
 					let isADoor = isDoorColumn || isDoorRow;
 					let top = Math.abs(this.highest - tileHeightLocal);
 
+					if (isADoor)
+						this.doors.push({row, column});
+
 					if (wallC && wallR)
 					{
 						wallImplementations.push(new WallCorner(this.floorThickness, this.wallThickness, top));
@@ -153,7 +159,7 @@ export class RoomView extends PIXI.Container
 							this.entities.push(wall);
 
 							wall.x = x + tileWidthHalf;
-							wall.y = y + (stairsType !== undefined ? tileHeight : 0);
+							wall.y = y + (stairsType !== -1 ? tileHeight : 0);
 							wall.z = this.getRealZ(row, column, isADoor ? 3 : 0);
 						}));
 					}
@@ -178,7 +184,7 @@ export class RoomView extends PIXI.Container
 						else if (wallR)
 							tile.tint = 0x0000FF;
 
-					tile.on("tile-click", evt => this.onTileClick(evt));
+					tile.on("tile-tap", evt => this.onTileClick(evt));
 					tile.on("tile-hover", evt => this.onTileHover(evt));
 					tile.on("tile-leave", evt => this.onTileLeave(evt));
 
@@ -203,7 +209,19 @@ export class RoomView extends PIXI.Container
 	{
 		this.addChild(entity);
 
+		anime({
+			targets: entity,
+			duration: 350,
+			easing: "linear",
+			alpha: [0, 1]
+		});
+
 		this.associateEntityToTile(entity, row, column, h);
+	}
+
+	removeEntity(entity)
+	{
+		this.removeChild(entity);
 	}
 
 	animateBuildingTiles()
@@ -222,7 +240,8 @@ export class RoomView extends PIXI.Container
 		// 			delay: (row + column) * 50,
 		// 			duration: 300,
 		// 			easing: Easings.SwiftOut,
-		// 			alpha: [0, 1]
+		// 			alpha: [0, 1],
+		// 			y: [this.tiles[row][column].y + 48, this.tiles[row][column].y]
 		// 		});
 		// 	}
 		// }
@@ -234,7 +253,7 @@ export class RoomView extends PIXI.Container
 
 		entity.position.x = pos.x;
 		entity.position.y = pos.y;
-		entity.z = pos.z;
+		entity.z = pos.z + performance.now();
 
 		this.updateLayerOrder();
 	}
@@ -293,6 +312,14 @@ export class RoomView extends PIXI.Container
 
 	getClosestTile(x, y)
 	{
+	}
+
+	getDoorTile(random = true)
+	{
+		if (!random)
+			return this.doors[0];
+
+		return this.doors[Math.floor(Math.random() * this.doors.length)];
 	}
 
 	getEntityPosition(entity, row, column, h = 0)
@@ -354,7 +381,7 @@ export class RoomView extends PIXI.Container
 		if (h === undefined)
 			h = 0;
 
-		if (getStairsType(this.heightmap, row, column) !== undefined)
+		if (getStairsType(this.heightmap, row, column) !== -1)
 			h += 1;
 
 		return (column + row) * tileHeightHalf - (h * tileWidthHalf);
@@ -380,7 +407,7 @@ export class RoomView extends PIXI.Container
 
 	onTileClick(evt)
 	{
-		this.emit("tile-click", evt);
+		this.emit("tile-tap", evt);
 	}
 
 	onTileHover(evt)

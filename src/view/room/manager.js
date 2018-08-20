@@ -54,6 +54,7 @@ export class RoomManager extends Manager
 
 	removeRoomViewer()
 	{
+		this.roomViewer.removeAllListeners();
 		application.display.stage.removeChild(this.roomViewer);
 	}
 

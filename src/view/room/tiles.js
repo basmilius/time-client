@@ -37,17 +37,18 @@ export class TileBase extends PIXI.Graphics
 		this.row = 0;
 		this.column = 0;
 
+		this.cacheAsBitmap = true;
 		this.interactive = true;
 		this.thickness = thickness;
 
-		this.on("click", () => this.onClick());
+		this.on("pointertap", () => this.onClick());
 		this.on("pointerover", () => this.onMouseOver());
 		this.on("pointerout", () => this.onMouseOut());
 	}
 
 	onClick()
 	{
-		this.emit("tile-click", {
+		this.emit("tile-tap", {
 			row: this.row,
 			column: this.column,
 			x: this.x,

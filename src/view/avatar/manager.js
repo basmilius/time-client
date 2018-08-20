@@ -61,7 +61,7 @@ export class AvatarManager extends Manager
 	{
 		initializeAvatarRenderer();
 
-		application.ticker.add(() => this.onGameTick());
+		application.display.on("tick", () => this.onGameTick());
 	}
 
 	newAvatar(...options)
@@ -84,7 +84,7 @@ export class AvatarManager extends Manager
 		{
 			this.lastUpdate = application.ticker.lastTime;
 
-			this.avatars.forEach(avatar => avatar.build());
+			this.avatars.forEach(avatar => avatar.update());
 		}
 	}
 

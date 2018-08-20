@@ -39,7 +39,7 @@ export class BottomBar extends PIXI.Container
 		this.background.y = 0;
 		this.background.width = width;
 
-		this.meButton.x = 24;
+		this.meButton.x = 12;
 		this.navigatorButton.x = (width - 24) - 360;
 		this.friendsButton.x = (width - 24) - 300;
 		this.chatButton.x = (width - 24) - 240;
@@ -273,6 +273,16 @@ export class BottomBarButtonNavigator extends BottomBarButtonAnimatedHover
 		];
 
 		super(textures);
+	}
+
+}
+
+export class BottomBarChatBubble extends PIXI.Container
+{
+
+	constructor()
+	{
+		super();
 	}
 
 }
