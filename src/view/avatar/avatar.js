@@ -49,10 +49,10 @@ export class AvatarImage extends PIXI.Container
 		this.figure = figure;
 		this.build();
 
-		let c = new PIXI.Graphics();
-		c.fillColor = 0xFF0000;
-		c.drawRect(0, 0, this.size[0], this.size[1]);
-		this.addChild(c);
+		this.bg = new PIXI.Graphics();
+		this.addChild(this.bg);
+
+		this.render();
 	}
 
 	build()
@@ -139,6 +139,12 @@ export class AvatarImage extends PIXI.Container
 	onFigureChanged()
 	{
 		this.gatherParts();
+	}
+
+	render()
+	{
+		this.bg.fillColor = 0xFF0000;
+		this.bg.drawRect(0, 0, this.size[0], this.size[1]);
 	}
 
 }

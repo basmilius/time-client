@@ -19,6 +19,10 @@ let controllingHuman = 0;
 
 export function fakeGamePlay()
 {
+	const avatarManager = application.getManager(AvatarManager);
+	const roomManager = application.getManager(RoomManager);
+	const hotelViewManager = application.getManager(HotelViewManager);
+
 	application.getManager(HotelViewManager).hotelView.open();
 
 	const nav = new NavigatorWindow();
@@ -34,11 +38,9 @@ export function fakeGamePlay()
 
 	application.getManager(InterfaceManager).interface.bottomBar.friendsButton.on("click", () =>
 	{
-		const roomManager = application.getManager(RoomManager);
-
-		if (application.getManager(HotelViewManager).hotelView.opened)
+		if (hotelViewManager.hotelView.opened)
 		{
-			application.getManager(HotelViewManager).hotelView.close();
+			hotelViewManager.hotelView.close();
 
 			setTimeout(() =>
 			{
@@ -48,19 +50,19 @@ export function fakeGamePlay()
 		}
 		else
 		{
-			application.getManager(HotelViewManager).hotelView.open();
-
+			hotelViewManager.hotelView.open();
 			roomManager.removeRoomViewer();
 		}
 	});
 
-	application.getManager(InterfaceManager).interface.bottomBar.friendsButton.emit("click");
+	let human = avatarManager.newAvatar(randomFigure());
+	human.direction = 2;
+	human.x = 100;
+	human.y = 100;
+	hotelViewManager.hotelView.addChild(human);
 
 	if (true === false)
 	{
-		const avatarManager = application.getManager(AvatarManager);
-		const roomManager = application.getManager(RoomManager);
-
 		roomManager.showRoomViewer(heightMaps[5]);
 
 		for (let i = 0; i < generateFurnis; i++)
