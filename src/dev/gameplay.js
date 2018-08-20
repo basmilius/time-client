@@ -60,6 +60,7 @@ export function fakeGamePlay()
 						position = roomManager.roomViewer.getDoorTile(true);
 
 					human.direction = human.headDirection = position.direction || Math.floor(Math.random() * 8) % 8;
+					human.addAction("Wave");
 
 					humans.push(new RoomUser(roomManager.roomViewer, human, position.row, position.column));
 					human.on("pointertap", () => human.figure = randomFigure());

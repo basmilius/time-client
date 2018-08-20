@@ -1,5 +1,7 @@
 import { tileHeight, tileHeightHalf, tileWidth, tileWidthHalf } from "./shared.js";
 
+const tileOffset = 1;
+
 export class TileCursor extends PIXI.Graphics
 {
 
@@ -23,11 +25,11 @@ export class TileCursor extends PIXI.Graphics
 		this.endFill();
 
 		this.lineStyle(4, 0xFFFFFF);
-		this.moveTo(points[0].x, points[0].y - 2);
-		this.lineTo(points[1].x, points[1].y - 2);
-		this.lineTo(points[2].x, points[2].y - 2);
-		this.lineTo(points[3].x, points[3].y - 2);
-		this.lineTo(points[0].x, points[0].y - 2);
+		this.moveTo(points[0].x, points[0].y - tileOffset);
+		this.lineTo(points[1].x, points[1].y - tileOffset);
+		this.lineTo(points[2].x, points[2].y - tileOffset);
+		this.lineTo(points[3].x, points[3].y - tileOffset);
+		this.lineTo(points[0].x, points[0].y - tileOffset);
 		this.endFill();
 	}
 

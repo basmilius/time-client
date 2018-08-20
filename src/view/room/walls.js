@@ -9,10 +9,16 @@ export class WallBase extends PIXI.Graphics
 
 		this.interactive = true;
 
+		this.cacheAsBitmap = true;
 		this.doorHeight = 85;
 		this.floorThickness = floorThickness;
 		this.wallHeight = 115 + (top * tileHeight);
 		this.wallThickness = wallThickness;
+	}
+
+	render()
+	{
+		this.clear();
 	}
 
 }
@@ -24,9 +30,17 @@ export class WallColumn extends WallBase
 	{
 		super(floorThickness, wallThickness, top);
 
-		let hole = doorMode ? (this.doorHeight + this.floorThickness) : 0;
+		this.doorMode = doorMode;
+		this.render();
+	}
 
-		if (!doorMode)
+	render()
+	{
+		super.render();
+
+		let hole = this.doorMode ? (this.doorHeight + this.floorThickness) : 0;
+
+		if (!this.doorMode)
 		{
 			this.beginFill(0x9697A1);
 			this.moveTo(tileWidthHalf, tileHeightHalf + this.floorThickness);
@@ -63,6 +77,13 @@ export class WallCorner extends WallBase
 	{
 		super(floorThickness, wallThickness, top);
 
+		this.render();
+	}
+
+	render()
+	{
+		super.render();
+
 		this.beginFill(0x71727B);
 		this.moveTo(0, -this.wallHeight);
 		this.lineTo(this.wallThickness, -this.wallHeight - (this.wallThickness / 2));
@@ -81,9 +102,17 @@ export class WallRow extends WallBase
 	{
 		super(floorThickness, wallThickness, top);
 
-		let hole = doorMode ? (this.doorHeight + this.floorThickness) : 0;
+		this.doorMode = doorMode;
+		this.render();
+	}
 
-		if (!doorMode)
+	render()
+	{
+		super.render();
+
+		let hole = this.doorMode ? (this.doorHeight + this.floorThickness) : 0;
+
+		if (!this.doorMode)
 		{
 			this.beginFill(0xBABECE);
 			this.moveTo(-tileWidthHalf, tileHeightHalf + this.floorThickness);

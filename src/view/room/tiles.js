@@ -3,6 +3,7 @@ import { tileHeight, tileWidth } from "./shared.js";
 function drawTile(g, points, thickness)
 {
 	g.beginFill(0x989865);
+	g.lineStyle(.5, 0x838357);
 	g.moveTo(points[0].x, points[0].y);
 	g.lineTo(points[1].x, points[1].y);
 	g.lineTo(points[2].x, points[2].y);

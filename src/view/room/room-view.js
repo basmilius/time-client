@@ -4,8 +4,9 @@ import { TileCursor } from "./cursor.js";
 import { getDoorDirection, getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, hitAreaOffset, isDoor, needsWallC, needsWallR, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
 import { Tile, TileBase } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
+import { Easings } from "../../ui/ui.js";
 
-const debugDoor = true;
+const debugDoor = false;
 const debugWalls = false;
 
 export class RoomView extends PIXI.Container
@@ -63,8 +64,6 @@ export class RoomView extends PIXI.Container
 		this.tileCursor.visible = false;
 
 		simpleDraggable(this);
-
-		// application.display.on("tick", delta => this.rotation = this.rotation + (.036 * delta) % 1);
 	}
 
 	clearEverything()
@@ -210,13 +209,6 @@ export class RoomView extends PIXI.Container
 	{
 		this.addChild(entity);
 
-		anime({
-			targets: entity,
-			duration: 350,
-			easing: "linear",
-			alpha: [0, 1]
-		});
-
 		this.associateEntityToTile(entity, row, column, h);
 	}
 
@@ -227,25 +219,23 @@ export class RoomView extends PIXI.Container
 
 	animateBuildingTiles()
 	{
-		// TODO(Bas, 2018-08-19): Give this another try :)
+		for(let row = 0; row < this.rows; row++)
+		{
+			for(let column = 0; column < this.columns; column++)
+			{
+				if (this.tiles[row][column] === undefined)
+					continue;
 
-		// for(let row = 0; row < this.rows; row++)
-		// {
-		// 	for(let column = 0; column < this.columns; column++)
-		// 	{
-		// 		if (this.tiles[row][column] === undefined)
-		// 			continue;
-		//
-		// 		anime({
-		// 			targets: this.tiles[row][column],
-		// 			delay: (row + column) * 50,
-		// 			duration: 300,
-		// 			easing: Easings.SwiftOut,
-		// 			alpha: [0, 1],
-		// 			y: [this.tiles[row][column].y + 48, this.tiles[row][column].y]
-		// 		});
-		// 	}
-		// }
+				anime({
+					targets: this.tiles[row][column],
+					delay: (row + column) * 50,
+					duration: 900,
+					easing: Easings.DecelerationCurve,
+					alpha: [0, 1],
+					y: [this.tiles[row][column].y + application.display.height, this.tiles[row][column].y]
+				});
+			}
+		}
 	}
 
 	associateEntityToTile(entity, row, column, h = 0)
