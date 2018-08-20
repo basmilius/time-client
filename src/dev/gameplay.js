@@ -19,16 +19,19 @@ let controllingHuman = 0;
 
 export function fakeGamePlay()
 {
+	const theRandomFigure = randomFigure();
+
 	const avatarManager = application.getManager(AvatarManager);
 	const roomManager = application.getManager(RoomManager);
 	const hotelViewManager = application.getManager(HotelViewManager);
+	const interfaceManager = application.getManager(InterfaceManager);
 
-	application.getManager(HotelViewManager).hotelView.open();
+	hotelViewManager.hotelView.open();
 
 	const nav = new NavigatorWindow();
 	application.stage.addChild(nav);
 
-	application.getManager(InterfaceManager).interface.bottomBar.navigatorButton.on("click", () =>
+	interfaceManager.interface.bottomBar.navigatorButton.on("click", () =>
 	{
 		if (nav.opened)
 			nav.close();
@@ -36,7 +39,7 @@ export function fakeGamePlay()
 			nav.open();
 	});
 
-	application.getManager(InterfaceManager).interface.bottomBar.friendsButton.on("click", () =>
+	interfaceManager.interface.bottomBar.friendsButton.on("click", () =>
 	{
 		if (hotelViewManager.hotelView.opened)
 		{
@@ -55,7 +58,9 @@ export function fakeGamePlay()
 		}
 	});
 
-	let human = avatarManager.newAvatar(randomFigure());
+	interfaceManager.interface.bottomBar.meButton.figure = theRandomFigure;
+
+	let human = avatarManager.newAvatar(theRandomFigure);
 	human.direction = 2;
 	human.x = 100;
 	human.y = 100;

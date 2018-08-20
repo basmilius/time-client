@@ -28,6 +28,8 @@ export class HotelView extends PIXI.Graphics
 
 		this.visible = false;
 		this.render();
+
+		application.display.on("resize", () => this.render());
 	}
 
 	close()
