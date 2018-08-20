@@ -10,6 +10,7 @@ import { FurniManager } from "./view/furni/furni.js";
 import { RoomManager } from "./view/room/manager.js";
 import { fakeGamePlay } from "./dev/gameplay.js";
 import { HotelViewManager } from "./view/hotel-view.js";
+import { LOADED_LIBS } from "./view/avatar/shared.js";
 
 export class InitializerLoader extends PIXI.loaders.Loader
 {
@@ -38,12 +39,25 @@ export class InitializerLoader extends PIXI.loaders.Loader
 
 	realLoad(cb, stage = 1)
 	{
-		this.urls
+		const valid = this.urls
 			.filter(url => url.stage === stage)
-			.map(url => url.url)
-			.forEach(url => super.add(url));
+			.map(url => url.url);
 
-		super.load(cb);
+		const urls = valid.filter(url => typeof url === "string");
+		const promises = valid.filter(url => typeof url !== "string");
+
+		urls.forEach(url => super.add(url));
+
+		const executor = async () =>
+		{
+			await new Promise(resolve => super.load(resolve));
+
+			for (let promise of promises)
+				await promise;
+		};
+
+		executor()
+			.then(() => cb());
 	}
 
 }

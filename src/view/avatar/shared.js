@@ -15,11 +15,6 @@ export let defaultAction = null;
 export let loadingAvatar = null;
 export let radiusComparator = (a, b) => b.getAttribute("z") - a.getAttribute("z");
 
-function onClothingLibraryLoaded(library, data)
-{
-	LOADED_LIBS[library] = data;
-}
-
 export function initializeAvatarRenderer()
 {
 	if (actionsSorted === null)
@@ -39,7 +34,7 @@ export function getAvatarClothingConfigUrl(config)
 
 export function getAvatarClothingLibraryUrl(library)
 {
-	return getDeliveryAssetsUrl(`/clothing/lib/${library}.json`);
+	return getDeliveryAssetsUrl(`/clothing/sprite/${library}.json`);
 }
 
 export function getValidActionsForPart(partType)
@@ -196,7 +191,16 @@ export function loadAvatarClothingLibrary(library, loader)
 		{
 			loader
 				.add(libraryUrl)
-				.on("complete", () => application.getResource(libraryUrl, loader) !== undefined ? onClothingLibraryLoaded(library, application.getResource(libraryUrl, loader).data) : undefined);
+				.use((asset, next) =>
+				{
+					if (asset.name !== libraryUrl)
+						return next();
+
+					LOADED_LIBS[library] = asset.data;
+
+					getTexture(library, true)
+						.then(() => next());
+				});
 
 			resolve();
 		}
@@ -208,9 +212,11 @@ export function loadAvatarClothingLibrary(library, loader)
 				.add(libraryUrl)
 				.on("complete", () =>
 				{
+					LOADED_LIBS[library] = application.getResource(libraryUrl, loader).data;
 					LOADING_LIBS[library] = undefined;
-					onClothingLibraryLoaded(library, application.getResource(libraryUrl, loader).data);
-					resolve(LOADED_LIBS[library]);
+
+					getTexture(library, true)
+						.then(() => resolve(LOADED_LIBS[library]));
 				})
 				.load();
 		}
@@ -267,26 +273,48 @@ export function getPartSets()
 
 export function getSprite(library, asset, center = {x: 0, y: 0})
 {
-	if (LOADED_LIBS[library] === undefined || LOADED_LIBS[library][asset] === undefined)
+	if (LOADED_LIBS[library] === undefined)
 		return null;
 
-	const sprite = new PIXI.Sprite(getTexture(library, asset));
+	try
+	{
+		const data = LOADED_LIBS[library]["assets"][asset];
 
-	sprite.x = center.x - (LOADED_LIBS[library][asset].offset.x + center.x - 12);
-	sprite.y = center.y - (LOADED_LIBS[library][asset].offset.y - (center.y / 2) - 6);
+		if (data === undefined)
+			return null;
 
-	return sprite;
+		const texture = new PIXI.Texture(getTexture(library));
+		texture.frame = new PIXI.Rectangle(data[0], data[1], data[2], data[3]);
+
+		const sprite = new PIXI.Sprite(texture);
+
+		sprite.x = center.x - (data[4] + center.x - 12);
+		sprite.y = center.y - (data[5] - (center.y / 2) - 6);
+
+		return sprite;
+	}
+	catch (err)
+	{
+		return null;
+	}
 }
 
-export function getTexture(library, asset)
+export function getTexture(library, promise = false)
 {
-	if (LOADED_LIBS[library] === undefined || LOADED_LIBS[library][asset] === undefined)
+	if (LOADED_LIBS[library] === undefined)
 		return null;
 
-	if (LOADED_TEXTURES[`${library}:${asset}`] !== undefined)
-		return LOADED_TEXTURES[`${library}:${asset}`];
+	if (LOADED_TEXTURES[library] !== undefined)
+		return promise ? Promise.resolve(LOADED_TEXTURES[library]) : LOADED_TEXTURES[library];
 
-	return LOADED_TEXTURES[`${library}:${asset}`] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library][asset]["asset"]);
+	if (!promise)
+		return LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library]["resource"]);
+
+	return new Promise(resolve =>
+	{
+		LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library]["resource"]);
+		resolve(LOADED_TEXTURES[library]);
+	});
 }
 
 export function getFlippedSetType(setType)

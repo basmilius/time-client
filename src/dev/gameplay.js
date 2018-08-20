@@ -10,7 +10,7 @@ import { InterfaceManager } from "../ui/interface/manager.js";
 import { HotelViewManager } from "../view/hotel-view.js";
 
 let generateFurnis = 0;
-let generateHumans = 25;
+let generateHumans = 10;
 
 let furnis = [];
 let humans = [];
@@ -59,7 +59,7 @@ export function fakeGamePlay()
 					if (i === controllingHuman)
 						position = roomManager.roomViewer.getDoorTile(true);
 
-					human.direction = human.headDirection = Math.floor(Math.random() * 8) % 8;
+					human.direction = human.headDirection = position.direction || Math.floor(Math.random() * 8) % 8;
 
 					humans.push(new RoomUser(roomManager.roomViewer, human, position.row, position.column));
 					human.on("pointertap", () => human.figure = randomFigure());
@@ -95,6 +95,8 @@ export function fakeGamePlay()
 			roomManager.roomViewer.addEntityToTile(furni, position.row, position.column);
 		}
 	}
+
+	interfaceManager.interface.bottomBar.friendsButton.emit("pointertap");
 }
 
 class RoomUser

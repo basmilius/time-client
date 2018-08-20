@@ -1,12 +1,11 @@
 import { simpleDraggable, withInstance } from "../../core/pixi-utils.js";
 import { application } from "../../bootstrapper.js";
 import { TileCursor } from "./cursor.js";
-import { getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, hitAreaOffset, isDoor, needsWallC, needsWallR, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
+import { getDoorDirection, getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, hitAreaOffset, isDoor, needsWallC, needsWallR, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
 import { Tile, TileBase } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
-import { Easings } from "../../ui/ui.js";
 
-const debugDoor = false;
+const debugDoor = true;
 const debugWalls = false;
 
 export class RoomView extends PIXI.Container
@@ -114,7 +113,6 @@ export class RoomView extends PIXI.Container
 					continue;
 
 				let door = isDoor(tiles, row, column);
-				// let doorDirection = door ? getDoorDirection(tiles, row, column) : null;
 				let stairsType = getStairsType(tiles, row, column);
 				let implementation = getTileImplementation(stairsType);
 
@@ -135,7 +133,10 @@ export class RoomView extends PIXI.Container
 					let top = Math.abs(this.highest - tileHeightLocal);
 
 					if (isADoor)
-						this.doors.push({row, column});
+						if (isDoorColumn)
+							this.doors.push({row: row - 1, column: column, direction: getDoorDirection(tiles, row - 1, column)});
+						else
+							this.doors.push({row: row, column: column - 1, direction: getDoorDirection(tiles, row, column - 1)});
 
 					if (wallC && wallR)
 					{
@@ -160,7 +161,7 @@ export class RoomView extends PIXI.Container
 
 							wall.x = x + tileWidthHalf;
 							wall.y = y + (stairsType !== -1 ? tileHeight : 0);
-							wall.z = this.getRealZ(row, column, isADoor ? 3 : 0);
+							wall.z = this.getRealZ(row, column, isADoor ? 4 : 0);
 						}));
 					}
 				}
@@ -253,7 +254,7 @@ export class RoomView extends PIXI.Container
 
 		entity.position.x = pos.x;
 		entity.position.y = pos.y;
-		entity.z = pos.z + performance.now();
+		entity.z = pos.z;
 
 		this.updateLayerOrder();
 	}
