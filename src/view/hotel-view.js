@@ -29,6 +29,9 @@ export class HotelView extends PIXI.Graphics
 		this.visible = false;
 		this.render();
 
+		this.interactive = false;
+		this.interactiveChildren = false;
+
 		application.display.on("resize", () => this.render());
 	}
 

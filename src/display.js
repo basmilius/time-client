@@ -70,12 +70,12 @@ export class Display extends PIXI.utils.EventEmitter
 		this.app = new PIXI.Application({
 			height: window.innerHeight,
 			width: window.innerWidth,
-			antialiasing: false,
+			antialiasing: true,
 			transparent: false,
 			resolution: this.dpi,
 			roundPixels: false,
 			powerPreference: "high-performance",
-			forceFXAA: false
+			forceFXAA: true
 		});
 
 		this.mount.appendChild(this.view);

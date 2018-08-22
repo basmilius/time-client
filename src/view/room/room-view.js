@@ -5,9 +5,13 @@ import { getDoorDirection, getHighestAndLowest, getStairsType, getTileHeightInde
 import { Tile, TileBase } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
 import { Easings } from "../../ui/ui.js";
+import { SceneryConfig } from "./scenery.js";
 
 const debugDoor = false;
 const debugWalls = false;
+
+const buildWalls = true;
+const enableScenery = true;
 
 export class RoomView extends PIXI.Container
 {
@@ -77,11 +81,16 @@ export class RoomView extends PIXI.Container
 		this._tiles = {};
 	}
 
-	prepareHeightmap(floorplan)
+	prepareHeightmap(floorplan, sceneryConfig = undefined)
 	{
 		this.emit("room-view-emptied");
 
 		this.clearEverything();
+
+		if (!enableScenery)
+			sceneryConfig = undefined;
+		else if (sceneryConfig === undefined)
+			sceneryConfig = new SceneryConfig("default", "default", "default");
 
 		const tiles = this._heightmap = floorplan
 			.trim()
@@ -123,33 +132,34 @@ export class RoomView extends PIXI.Container
 				let y = this.getY(row, column);
 				let z = this.getRealZ(row, column, 1);
 
-				if (wall)
+				let isDoorColumn = isDoor(tiles, row - 1, column);
+				let isDoorRow = isDoor(tiles, row, column - 1);
+				let isADoor = isDoorColumn || isDoorRow;
+
+				if (isADoor)
+					if (isDoorColumn)
+						this.doors.push({row: row - 1, column: column, direction: getDoorDirection(tiles, row - 1, column)});
+					else
+						this.doors.push({row: row, column: column - 1, direction: getDoorDirection(tiles, row, column - 1)});
+
+				if (wall && buildWalls)
 				{
 					let wallImplementations = [];
-					let isDoorColumn = isDoor(tiles, row - 1, column);
-					let isDoorRow = isDoor(tiles, row, column - 1);
-					let isADoor = isDoorColumn || isDoorRow;
 					let top = Math.abs(this.highest - tileHeightLocal);
-
-					if (isADoor)
-						if (isDoorColumn)
-							this.doors.push({row: row - 1, column: column, direction: getDoorDirection(tiles, row - 1, column)});
-						else
-							this.doors.push({row: row, column: column - 1, direction: getDoorDirection(tiles, row, column - 1)});
 
 					if (wallC && wallR)
 					{
-						wallImplementations.push(new WallCorner(this.floorThickness, this.wallThickness, top));
-						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn));
-						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow));
+						wallImplementations.push(new WallCorner(this.floorThickness, this.wallThickness, top, sceneryConfig));
+						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, sceneryConfig));
+						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, sceneryConfig));
 					}
 					else if (wallC)
 					{
-						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn));
+						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, sceneryConfig));
 					}
 					else if (wallR)
 					{
-						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow));
+						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, sceneryConfig));
 					}
 
 					for (const wi of wallImplementations)
@@ -165,7 +175,7 @@ export class RoomView extends PIXI.Container
 					}
 				}
 
-				this.addChild(withInstance(new implementation(this.floorThickness), tile =>
+				this.addChild(withInstance(new implementation(this.floorThickness, sceneryConfig), tile =>
 				{
 					this.entities.push(tile);
 					this._tiles[row][column] = tile;
@@ -219,9 +229,12 @@ export class RoomView extends PIXI.Container
 
 	animateBuildingTiles()
 	{
-		for(let row = 0; row < this.rows; row++)
+		if (true !== false)
+			return;
+
+		for (let row = 0; row < this.rows; row++)
 		{
-			for(let column = 0; column < this.columns; column++)
+			for (let column = 0; column < this.columns; column++)
 			{
 				if (this.tiles[row][column] === undefined)
 					continue;

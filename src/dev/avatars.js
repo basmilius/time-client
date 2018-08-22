@@ -8,4 +8,4 @@ const figures = [
 	"hr-3012-61.hd-600-1370.ch-3399-92-1409.lg-3006-1409-92.sh-3064-89.ha-3586"
 ];
 
-export const randomFigure = () => figures[Math.floor(Math.random() * figures.length)];
+export const randomFigure = () => figures[Math.floor(Math.random() * (figures.length * 100)) % figures.length];

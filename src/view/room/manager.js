@@ -1,12 +1,11 @@
-import { application} from "../../bootstrapper.js";
+import { application } from "../../bootstrapper.js";
 import { Manager } from "../../core/manager/manager.js";
 import { getDeliveryAssetsUrl } from "../../preferences.js";
 import { RoomView } from "./room-view.js";
 
 const roomAssets = {
-	index: getDeliveryAssetsUrl("/room-content/index.xml"),
 	assets: getDeliveryAssetsUrl("/room-content/room_assets.xml"),
-	manifest: getDeliveryAssetsUrl("/room-content/manifest.xml"),
+	sprites: getDeliveryAssetsUrl("/room-content/assets.json"),
 	visualization: getDeliveryAssetsUrl("/room-content/room_visualization.xml")
 };
 
@@ -20,14 +19,38 @@ function initRoomViewer()
 export class RoomManager extends Manager
 {
 
+	get assets()
+	{
+		return this._assets;
+	}
+
 	get roomViewer()
 	{
 		return localRoomViewer;
 	}
 
+	get sceneryTexture()
+	{
+		return this._sceneryTexture;
+	}
+
+	get sprites()
+	{
+		return this._sprites;
+	}
+
+	get visualization()
+	{
+		return this._visualization;
+	}
+
 	constructor()
 	{
 		super();
+
+		this._assets = null;
+		this._sprites = null;
+		this._visualization = null;
 
 		initRoomViewer();
 
@@ -38,10 +61,36 @@ export class RoomManager extends Manager
 	{
 		await super.initialize();
 
-		this.loader.add(roomAssets.index);
-		this.loader.add(roomAssets.assets);
-		this.loader.add(roomAssets.manifest);
-		this.loader.add(roomAssets.visualization);
+		this.loadConfig(roomAssets.assets);
+		this.loadConfig(roomAssets.sprites);
+		this.loadConfig(roomAssets.visualization);
+	}
+
+	loadConfig(url)
+	{
+		this.loader
+			.add(url)
+			.on("complete", (loader, file) => loader.resources[url] !== undefined ? this.onConfigLoaded(url, file[url]) : undefined);
+	}
+
+	onConfigLoaded(url, file)
+	{
+		switch (url)
+		{
+			case roomAssets.assets:
+				this._assets = file.data;
+				break;
+
+			case roomAssets.sprites:
+				this._sprites = file.data;
+				this._sceneryTexture = PIXI.Texture.fromImage(`data:image/png;base64,${this.sprites.resource}`);
+				this.sprites.resource = undefined;
+				break;
+
+			case roomAssets.visualization:
+				this._visualization = file.data;
+				break;
+		}
 	}
 
 	ensureRoomViewerIsMounted()
@@ -58,11 +107,11 @@ export class RoomManager extends Manager
 		application.display.stage.removeChild(this.roomViewer);
 	}
 
-	showRoomViewer(heightmap)
+	showRoomViewer(heightmap, scenery = undefined)
 	{
 		this.ensureRoomViewerIsMounted();
 
-		this.roomViewer.prepareHeightmap(heightmap);
+		this.roomViewer.prepareHeightmap(heightmap, scenery);
 		this.roomViewer.visible = true;
 	}
 

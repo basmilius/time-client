@@ -146,31 +146,12 @@ export function loadAvatarClothingConfig(config, loader)
 	return new Promise(resolve =>
 	{
 		const configUrl = getAvatarClothingConfigUrl(config);
-		const isInitializerLoader = loader instanceof InitializerLoader;
 
-		if (isInitializerLoader)
-		{
-			loader
-				.add(configUrl)
-				.on("complete", () => application.getResource(configUrl) !== undefined ? LOADED_CONFIGS[config] = application.getResource(configUrl).data : undefined);
+		loader
+			.add(configUrl)
+			.on("complete", () => application.getResource(configUrl) !== undefined ? LOADED_CONFIGS[config] = application.getResource(configUrl).data : undefined);
 
-			resolve();
-		}
-		else
-		{
-			Logger.debug(`Loading avatar clothing config: ${config}`);
-
-			loader
-				.add(configUrl)
-				.on("complete", () =>
-				{
-					LOADED_CONFIGS[config] = application.getResource(configUrl).data;
-
-					if (!isInitializerLoader)
-						resolve(LOADED_CONFIGS[config]);
-				})
-				.load();
-		}
+		resolve();
 	});
 }
 
@@ -308,11 +289,16 @@ export function getTexture(library, promise = false)
 		return promise ? Promise.resolve(LOADED_TEXTURES[library]) : LOADED_TEXTURES[library];
 
 	if (!promise)
-		return LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library]["resource"]);
+	{
+		const texture = LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library].resource);
+		LOADED_LIBS[library].resource = undefined;
+		return texture;
+	}
 
 	return new Promise(resolve =>
 	{
-		LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library]["resource"]);
+		LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library].resource);
+		LOADED_LIBS[library].resource = undefined;
 		resolve(LOADED_TEXTURES[library]);
 	});
 }

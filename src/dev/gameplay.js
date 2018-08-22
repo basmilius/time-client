@@ -8,6 +8,7 @@ import { heightMaps } from "./rooms.js";
 import { NavigatorWindow } from "../ui/navigator/window.js";
 import { InterfaceManager } from "../ui/interface/manager.js";
 import { HotelViewManager } from "../view/hotel-view.js";
+import { SceneryConfig } from "../view/room/scenery.js";
 
 let generateFurnis = 0;
 let generateHumans = 10;
@@ -49,7 +50,7 @@ export function fakeGamePlay()
 			{
 				roomManager.roomViewer.on("room-view-ready", () => roomManager.roomViewer.animateBuildingTiles());
 				roomManager.roomViewer.on("tile-tap", evt => humans[controllingHuman].walkTo(evt.row, evt.column));
-				roomManager.showRoomViewer(heightMaps[3]);
+				roomManager.showRoomViewer(heightMaps[3], new SceneryConfig("default", "default", "default"));
 
 				for (let i = 0; i < generateHumans; i++)
 				{
