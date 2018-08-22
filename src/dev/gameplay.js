@@ -50,7 +50,7 @@ export function fakeGamePlay()
 			{
 				roomManager.roomViewer.on("room-view-ready", () => roomManager.roomViewer.animateBuildingTiles());
 				roomManager.roomViewer.on("tile-tap", evt => humans[controllingHuman].walkTo(evt.row, evt.column));
-				roomManager.showRoomViewer(heightMaps[3], new SceneryConfig("default", "default", "default"));
+				roomManager.showRoomViewer(heightMaps[Math.floor(Math.random() * heightMaps.length)], new SceneryConfig("default", "default", "default"));
 
 				for (let i = 0; i < generateHumans; i++)
 				{
@@ -61,10 +61,11 @@ export function fakeGamePlay()
 						position = roomManager.roomViewer.getDoorTile(true);
 
 					human.direction = human.headDirection = position.direction || Math.floor(Math.random() * 8) % 8;
-					human.addAction("Wave");
+					// human.addAction("Wave");
 
 					humans.push(new RoomUser(roomManager.roomViewer, human, position.row, position.column));
 					human.on("pointertap", () => human.figure = randomFigure());
+					human.on("pointertap", () => roomManager.roomViewer.centerEntity(human, true));
 
 					roomManager.roomViewer.addEntityToTile(human, position.row, position.column);
 				}
@@ -122,7 +123,7 @@ class RoomUser
 		let distance = getDistance(this.position, {row, column});
 		heading = heading !== undefined ? heading : getHeading(this.position, {row, column}) || this.avatar.direction;
 
-		const {x, y, z} = this.roomViewer.getEntityPosition(this.avatar, row, column);
+		const {x, y, z} = this.roomViewer.getEntityPosition(this.avatar, row, column, 1);
 
 		if (distance > 1)
 		{

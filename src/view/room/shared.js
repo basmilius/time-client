@@ -120,9 +120,14 @@ export function isDoor(tiles, row, column)
 	return getSurroundings(tiles, row, column).filter(t => t !== null).length === 1;
 }
 
-export function needsWallC(tiles, row, column)
+export function isValid(tiles, row, column)
 {
-	if (isDoor(tiles, row, column))
+	return tiles[row][column] !== null;
+}
+
+export function needsWallColumn(tiles, row, column)
+{
+	if (isDoor(tiles, row, column) || !isValid(tiles, row, column))
 		return false;
 
 	let cy = row;
@@ -134,9 +139,9 @@ export function needsWallC(tiles, row, column)
 	return !((getTile(tiles, row - 1, column - 1) !== null && !isDoor(tiles, row - 1, column - 1)) || (getTile(tiles, row - 1, column + 1) !== null && !isDoor(tiles, row - 1, column + 1)));
 }
 
-export function needsWallR(tiles, row, column)
+export function needsWallRow(tiles, row, column)
 {
-	if (isDoor(tiles, row, column))
+	if (isDoor(tiles, row, column) || !isValid(tiles, row, column))
 		return false;
 
 	let cx = column;

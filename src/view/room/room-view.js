@@ -1,19 +1,16 @@
-import { simpleDraggable, withInstance } from "../../core/pixi-utils.js";
+import { advancedDraggable, withInstance } from "../../core/pixi-utils.js";
 import { application } from "../../bootstrapper.js";
 import { TileCursor } from "./cursor.js";
-import { getDoorDirection, getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, hitAreaOffset, isDoor, needsWallC, needsWallR, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
-import { Tile, TileBase } from "./tiles.js";
+import { getDoorDirection, getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, isDoor, needsWallColumn, needsWallRow, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
+import { Tile } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
 import { Easings } from "../../ui/ui.js";
 import { SceneryConfig } from "./scenery.js";
 
-const debugDoor = false;
-const debugWalls = false;
-
 const buildWalls = true;
 const enableScenery = true;
 
-export class RoomView extends PIXI.Container
+export class RoomView extends PIXI.Graphics
 {
 
 	get entities()
@@ -55,6 +52,8 @@ export class RoomView extends PIXI.Container
 		this.columns = 0;
 		this.rows = 0;
 
+		this.posfix = {x: 0, y: 0};
+
 		this.floorThickness = 8;
 		this.wallThickness = 8;
 
@@ -67,15 +66,49 @@ export class RoomView extends PIXI.Container
 		this.tileCursor = new TileCursor();
 		this.tileCursor.visible = false;
 
-		simpleDraggable(this);
+		this.root = new PIXI.Container();
+
+		this.tileSprites = new PIXI.Container();
+		this.tileSprites.z = 10;
+
+		this.wallSprites = new PIXI.Container();
+		this.wallSprites.z = 20;
+
+		this.root.addChild(this.tileSprites);
+		this.root.addChild(this.wallSprites);
+		this.root.addChild(this.tileCursor);
+
+		this.addChild(this.root);
+
+		const {width, height} = application.display.size;
+
+		this.beginFill(0x000000);
+		this.drawRect(0, 0, width, height);
+		this.endFill();
+
+		advancedDraggable(this.root, this, (x, y) =>
+		{
+			this.root.x = x;
+			this.root.y = y;
+		});
+
+		application.display.on("tick", () => this.root.updateLayerOrder());
 	}
 
 	clearEverything()
 	{
-		while (this.children[0])
-			this.removeChild(this.children[0]);
+		while (this.tileSprites.children[0])
+			this.tileSprites.removeChild(this.tileSprites.children[0]);
 
-		this.addChild(this.tileCursor);
+		while (this.wallSprites.children[0])
+			this.wallSprites.removeChild(this.wallSprites.children[0]);
+
+		while (this.root.children[0])
+			this.root.removeChild(this.root.children[0]);
+
+		this.root.addChild(this.tileSprites);
+		this.root.addChild(this.wallSprites);
+		this.root.addChild(this.tileCursor);
 
 		this._entities = [];
 		this._tiles = {};
@@ -100,6 +133,7 @@ export class RoomView extends PIXI.Container
 		const {highest, lowest} = getHighestAndLowest(this.heightmap);
 		this.highest = highest;
 		this.lowest = lowest;
+		this.posfix = {x: 0, y: 0};
 
 		if (tiles.length === 0)
 			return;
@@ -120,17 +154,15 @@ export class RoomView extends PIXI.Container
 				if (tileHeightLocal === null)
 					continue;
 
-				let door = isDoor(tiles, row, column);
 				let stairsType = getStairsType(tiles, row, column);
 				let implementation = getTileImplementation(stairsType);
 
-				let wallC = needsWallC(tiles, row, column);
-				let wallR = needsWallR(tiles, row, column);
+				let wallC = needsWallColumn(tiles, row, column);
+				let wallR = needsWallRow(tiles, row, column);
 				let wall = wallC || wallR;
 
 				let x = this.getX(row, column);
 				let y = this.getY(row, column);
-				let z = this.getRealZ(row, column, 1);
 
 				let isDoorColumn = isDoor(tiles, row - 1, column);
 				let isDoorRow = isDoor(tiles, row, column - 1);
@@ -150,49 +182,34 @@ export class RoomView extends PIXI.Container
 					if (wallC && wallR)
 					{
 						wallImplementations.push(new WallCorner(this.floorThickness, this.wallThickness, top, sceneryConfig));
-						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, sceneryConfig));
-						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, sceneryConfig));
+						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, !needsWallColumn(tiles, row, column + 1), sceneryConfig));
+						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, !needsWallRow(tiles, row + 1, column), sceneryConfig));
 					}
 					else if (wallC)
 					{
-						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, sceneryConfig));
+						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, !needsWallColumn(tiles, row, column + 1), sceneryConfig));
 					}
 					else if (wallR)
 					{
-						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, sceneryConfig));
+						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, !needsWallRow(tiles, row + 1, column), sceneryConfig));
 					}
 
 					for (const wi of wallImplementations)
 					{
-						this.addChild(withInstance(wi, wall =>
+						this.wallSprites.addChild(withInstance(wi, wall =>
 						{
-							this.entities.push(wall);
-
 							wall.x = x + tileWidthHalf;
 							wall.y = y + (stairsType !== -1 ? tileHeight : 0);
-							wall.z = this.getRealZ(row, column, isADoor ? 4 : 0);
 						}));
 					}
 				}
 
-				this.addChild(withInstance(new implementation(this.floorThickness, sceneryConfig), tile =>
+				this.tileSprites.addChild(withInstance(new implementation(this.floorThickness, sceneryConfig), tile =>
 				{
-					this.entities.push(tile);
 					this._tiles[row][column] = tile;
 
 					tile.row = row;
 					tile.column = column;
-
-					if (debugDoor && door)
-						tile.tint = 0xFF0000;
-
-					if (debugWalls)
-						if (wallC && wallR)
-							tile.tint = 0x00FFFF;
-						else if (wallC)
-							tile.tint = 0x00FF00;
-						else if (wallR)
-							tile.tint = 0x0000FF;
 
 					tile.on("tile-tap", evt => this.onTileClick(evt));
 					tile.on("tile-hover", evt => this.onTileHover(evt));
@@ -200,24 +217,42 @@ export class RoomView extends PIXI.Container
 
 					tile.x = x;
 					tile.y = y;
-					tile.z = z;
 				}));
 			}
 		}
 
+		this.tileSprites.children.forEach(child =>
+		{
+			if (child.x < this.posfix.x)
+				this.posfix.x = child.x;
+
+			if (child.y < this.posfix.y)
+				this.posfix.y = child.y;
+		});
+
+		this.posfix.x = Math.abs(this.posfix.x);
+		this.posfix.y = Math.abs(this.posfix.y);
+
+		this.tileSprites.children.forEach(child =>
+		{
+			child.x += this.posfix.x;
+			child.y += this.posfix.y;
+		});
+
+		this.wallSprites.children.forEach(child =>
+		{
+			child.x += this.posfix.x;
+			child.y += this.posfix.y;
+		});
+
 		this.centerRoom();
-
-		this.position.x = Math.floor((application.display.width / 2) - (this.width / 2));
-		this.position.y = Math.floor((application.display.height / 2) - (this.height / 2 - 115));
-
-		this.hitArea = new PIXI.Rectangle(-hitAreaOffset, -hitAreaOffset, this.width + (hitAreaOffset * 2), this.height + (hitAreaOffset * 2));
 
 		this.emit("room-view-ready");
 	}
 
 	addEntityToTile(entity, row, column, h)
 	{
-		this.addChild(entity);
+		this.root.addChild(entity);
 
 		this.associateEntityToTile(entity, row, column, h);
 	}
@@ -258,8 +293,6 @@ export class RoomView extends PIXI.Container
 		entity.position.x = pos.x;
 		entity.position.y = pos.y;
 		entity.z = pos.z;
-
-		this.updateLayerOrder();
 	}
 
 	centerEntity(entity, animate = true)
@@ -275,17 +308,17 @@ export class RoomView extends PIXI.Container
 		if (animate)
 		{
 			anime({
-				targets: this,
+				targets: this.root,
 				x,
 				y,
 				duration: 800,
-				easing: "easeInOutSine"
+				easing: Easings.DecelerationCurve
 			});
 		}
 		else
 		{
 			anime({
-				targets: this,
+				targets: this.root,
 				x,
 				y,
 				duration: 45,
@@ -296,22 +329,8 @@ export class RoomView extends PIXI.Container
 
 	centerRoom()
 	{
-		if (this.entities.length > 0)
-		{
-			let xred = this.entities.reduce((acc, cur) => acc.x < cur.x ? acc : cur).x;
-			let yred = this.entities
-				.filter(acc => acc instanceof TileBase)
-				.reduce((acc, cur) => acc.y < cur.y ? acc : cur).y;
-
-			this.offsets.x = -xred;
-			this.offsets.y = -yred;
-
-			this.entities.forEach(entity =>
-			{
-				entity.x -= xred;
-				entity.y -= yred;
-			});
-		}
+		this.root.x = this.width / 2 - this.root.width / 2;
+		this.root.y = this.height / 2 - this.root.height / 2;
 	}
 
 	getClosestTile(x, y)
@@ -338,10 +357,7 @@ export class RoomView extends PIXI.Container
 
 		let x = (this.getX(row, column) + tileWidthHalf) + (offsets.x + this.offsets.x);
 		let y = (this.getY(row, column) + tileHeightHalf) + (offsets.y + this.offsets.y) + (tile && isStairs ? tileHeightHalf : 0);
-		let z = this.getZ(row, column + 2, 5) + h;
-
-		if (isDoor(this.tiles, row, column))
-			z = this.getRealZ(row, column, 4);
+		let z = this.getZ(row, column) + h;
 
 		return {x, y, z, isStairs};
 	}
@@ -375,7 +391,7 @@ export class RoomView extends PIXI.Container
 
 	getX(row, column)
 	{
-		return (column - row) * tileWidthHalf;
+		return (column - row) * tileWidthHalf + this.posfix.x;
 	}
 
 	getY(row, column)
@@ -388,19 +404,14 @@ export class RoomView extends PIXI.Container
 		if (getStairsType(this.heightmap, row, column) !== -1)
 			h += 1;
 
-		return (column + row) * tileHeightHalf - (h * tileWidthHalf);
+		return (column + row) * tileHeightHalf - (h * tileWidthHalf) + this.posfix.y;
 	}
 
 	getZ(row, column, add = 0)
 	{
-		row *= 1000;
-		column *= 1000;
+		if (isDoor(this.tiles, row, column))
+			return (11 + add);
 
-		return (row * this.columns) + column + add;
-	}
-
-	getRealZ(row, column, add = 0)
-	{
 		return (row * this.columns) + column + add;
 	}
 
@@ -422,8 +433,7 @@ export class RoomView extends PIXI.Container
 
 			this.currentHover = [evt.row, evt.column];
 			this.tileCursor.visible = true;
-			this.tileCursor.hover(x, y, this.getRealZ(evt.row, evt.column, 2));
-			this.updateLayerOrder();
+			this.tileCursor.hover(x, y, 11);
 		}, 1);
 	}
 

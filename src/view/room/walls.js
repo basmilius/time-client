@@ -26,11 +26,12 @@ export class WallBase extends PIXI.Graphics
 export class WallColumn extends WallBase
 {
 
-	constructor(floorThickness, wallThickness, top, doorMode, sceneryConfig)
+	constructor(floorThickness, wallThickness, top, isDoor, isEnding, sceneryConfig)
 	{
 		super(floorThickness, wallThickness, top);
 
-		this.doorMode = doorMode;
+		this.isDoor = isDoor;
+		this.isEnding = isEnding;
 		this.sceneryConfig = sceneryConfig;
 		this.render();
 	}
@@ -39,16 +40,16 @@ export class WallColumn extends WallBase
 	{
 		super.render();
 
-		let hole = this.doorMode ? (this.doorHeight + this.floorThickness) : 0;
+		let hole = this.isDoor ? (this.doorHeight + this.floorThickness) : 0;
 
-		if (!this.doorMode)
+		if (!this.isDoor)
 		{
 			this.beginFill(0x9697A1);
-			this.moveTo(tileWidthHalf, tileHeightHalf + this.floorThickness);
-			this.lineTo(tileWidthHalf + this.wallThickness, tileHeightHalf + this.floorThickness - (this.wallThickness / 2));
+			this.moveTo(tileWidthHalf, tileHeightHalf + (this.isEnding ? this.floorThickness : 0));
+			this.lineTo(tileWidthHalf + this.wallThickness, tileHeightHalf + (this.isEnding ? this.floorThickness : 0) - (this.wallThickness / 2));
 			this.lineTo(tileWidthHalf + this.wallThickness, tileHeightHalf - (this.wallThickness / 2) - this.wallHeight);
 			this.lineTo(tileWidthHalf, tileHeightHalf - this.wallHeight);
-			this.lineTo(tileWidthHalf, tileHeightHalf + this.floorThickness);
+			this.lineTo(tileWidthHalf, tileHeightHalf + (this.isEnding ? this.floorThickness : 0));
 			this.endFill();
 		}
 
@@ -57,7 +58,7 @@ export class WallColumn extends WallBase
 			const sprite = new PIXI.extras.TilingSprite(this.sceneryConfig.getWallTexture());
 			sprite.x = 0;
 			sprite.y = -this.wallHeight;
-			sprite.height = this.wallHeight + this.floorThickness - hole;
+			sprite.height = this.wallHeight - hole;
 			sprite.width = tileWidthHalf;
 			sprite.skew.y = -5.82;
 			sprite.scale.x = 1.13;
@@ -73,11 +74,11 @@ export class WallColumn extends WallBase
 		else
 		{
 			this.beginFill(0xB5B9C9);
-			this.moveTo(tileWidthHalf, tileHeightHalf + this.floorThickness - hole);
+			this.moveTo(tileWidthHalf, tileHeightHalf + hole);
 			this.lineTo(tileWidthHalf, tileHeightHalf - this.wallHeight);
 			this.lineTo(0, tileHeightHalf - this.wallHeight - tileHeightHalf);
-			this.lineTo(0, this.floorThickness - hole);
-			this.lineTo(tileWidthHalf, tileHeightHalf + this.floorThickness - hole);
+			this.lineTo(0, hole);
+			this.lineTo(tileWidthHalf, tileHeightHalf + hole);
 			this.endFill();
 		}
 
@@ -120,11 +121,12 @@ export class WallCorner extends WallBase
 export class WallRow extends WallBase
 {
 
-	constructor(floorThickness, wallThickness, top, doorMode, sceneryConfig)
+	constructor(floorThickness, wallThickness, top, isDoor, isEnding, sceneryConfig)
 	{
 		super(floorThickness, wallThickness, top);
 
-		this.doorMode = doorMode;
+		this.isDoor = isDoor;
+		this.isEnding = isEnding;
 		this.sceneryConfig = sceneryConfig;
 
 		this.render();
@@ -134,16 +136,16 @@ export class WallRow extends WallBase
 	{
 		super.render();
 
-		let hole = this.doorMode ? (this.doorHeight + this.floorThickness) : 0;
+		let hole = this.isDoor ? (this.doorHeight + this.floorThickness) : 0;
 
-		if (!this.doorMode)
+		if (!this.isDoor)
 		{
 			this.beginFill(0xBABECE);
-			this.moveTo(-tileWidthHalf, tileHeightHalf + this.floorThickness);
+			this.moveTo(-tileWidthHalf, tileHeightHalf + (this.isEnding ? this.floorThickness : 0));
 			this.lineTo(-tileWidthHalf, tileHeightHalf - this.wallHeight);
 			this.lineTo(-tileWidthHalf - this.wallThickness, tileHeightHalf - this.wallHeight - (this.wallThickness / 2));
-			this.lineTo(-tileWidthHalf - this.wallThickness, tileHeightHalf + this.floorThickness - (this.wallThickness / 2));
-			this.lineTo(-tileWidthHalf, tileHeightHalf + this.floorThickness);
+			this.lineTo(-tileWidthHalf - this.wallThickness, tileHeightHalf + (this.isEnding ? this.floorThickness : 0) - (this.wallThickness / 2));
+			this.lineTo(-tileWidthHalf, tileHeightHalf + (this.isEnding ? this.floorThickness : 0));
 			this.endFill();
 		}
 
@@ -152,7 +154,7 @@ export class WallRow extends WallBase
 			const sprite = new PIXI.extras.TilingSprite(this.sceneryConfig.getWallTexture());
 			sprite.x = -tileWidthHalf;
 			sprite.y = -(this.wallHeight - tileHeightHalf);
-			sprite.height = this.wallHeight + this.floorThickness - hole;
+			sprite.height = this.wallHeight - hole;
 			sprite.width = tileWidthHalf;
 			sprite.skew.y = 5.82;
 			sprite.scale.x = 1.13;
@@ -162,11 +164,11 @@ export class WallRow extends WallBase
 		else
 		{
 			this.beginFill(0x92939D);
-			this.moveTo(-tileWidthHalf, tileHeightHalf + this.floorThickness - hole);
+			this.moveTo(-tileWidthHalf, tileHeightHalf - hole);
 			this.lineTo(-tileWidthHalf, tileHeightHalf - this.wallHeight);
 			this.lineTo(0, tileHeightHalf - this.wallHeight - tileHeightHalf);
-			this.lineTo(0, this.floorThickness - hole);
-			this.lineTo(-tileWidthHalf, tileHeightHalf + this.floorThickness - hole);
+			this.lineTo(0, -hole);
+			this.lineTo(-tileWidthHalf, tileHeightHalf - hole);
 			this.endFill();
 		}
 
