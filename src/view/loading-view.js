@@ -127,9 +127,12 @@ export class LoadingView extends PIXI.Graphics
 		this.loadingBar.position.x = (width / 2) - (this.loadingBar.barWidth / 2);
 		this.loadingBar.position.y = height - (this.loadingBar.barHeight + 60);
 
-		this.logo.visible = true;
-		this.logo.x = Math.round((width / 2) - (this.logo.width / 2));
-		this.logo.y = Math.round((height / 2) - (this.logo.height / 2));
+		if (this.logo !== null)
+		{
+			this.logo.visible = true;
+			this.logo.x = Math.round((width / 2) - (this.logo.width / 2));
+			this.logo.y = Math.round((height / 2) - (this.logo.height / 2));
+		}
 
 		this.text.text = application.getManager(I18nManager).getString("loading-view.starting-up", {percentage}, "");
 

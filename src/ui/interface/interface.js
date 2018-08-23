@@ -1,5 +1,4 @@
 import { BottomBar, bottomBarHeight } from "./bottombar.js";
-import { MeMenu } from "./memenu.js";
 import { Easings } from "../ui.js";
 
 export const interfaceResources = {
