@@ -65,16 +65,6 @@ export class InitializerLoader extends PIXI.loaders.Loader
 export class Application extends PIXI.utils.EventEmitter
 {
 
-	get display()
-	{
-		return this._display;
-	}
-
-	get loader()
-	{
-		return this._loader;
-	}
-
 	get stage()
 	{
 		return this.display.stage;
@@ -89,9 +79,8 @@ export class Application extends PIXI.utils.EventEmitter
 	{
 		super();
 
-		this._display = new Display();
-		this._loader = new InitializerLoader();
-
+		this.display = new Display();
+		this.loader = new InitializerLoader();
 		this.managers = [];
 	}
 

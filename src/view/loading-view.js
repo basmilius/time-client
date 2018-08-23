@@ -44,7 +44,7 @@ class LoadingBar extends PIXI.Graphics
 
 }
 
-export class LoadingView extends PIXI.Graphics
+export class LoadingView extends PIXI.Container
 {
 
 	get percentage()
@@ -83,7 +83,7 @@ export class LoadingView extends PIXI.Graphics
 			wordWrapWidth: this.loadingBar.barWidth
 		});
 
-		this.text = new PIXI.Text("", style);
+		this.text = new PIXI.Text("Initializing...", style);
 
 		application.display.on("resize", () => this.render());
 	}
@@ -103,8 +103,6 @@ export class LoadingView extends PIXI.Graphics
 		this.addChild(this.loadingBar);
 		this.addChild(this.text);
 
-		this.logo.visible = false;
-
 		application.loader.on("progress", state => this.percentage = state.progress);
 
 		this.render();
@@ -115,21 +113,14 @@ export class LoadingView extends PIXI.Graphics
 	{
 		const percentage = this.percentage;
 
-		this.clear();
-
 		const height = application.display.height;
 		const width = application.display.width;
-
-		this.beginFill(0x000000);
-		this.drawRect(0, 0, width, height);
-		this.endFill();
 
 		this.loadingBar.position.x = (width / 2) - (this.loadingBar.barWidth / 2);
 		this.loadingBar.position.y = height - (this.loadingBar.barHeight + 60);
 
 		if (this.logo !== null)
 		{
-			this.logo.visible = true;
 			this.logo.x = Math.round((width / 2) - (this.logo.width / 2));
 			this.logo.y = Math.round((height / 2) - (this.logo.height / 2));
 		}

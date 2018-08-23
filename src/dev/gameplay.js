@@ -50,7 +50,7 @@ export function fakeGamePlay()
 			{
 				roomManager.roomViewer.on("room-view-ready", () => roomManager.roomViewer.animateBuildingTiles());
 				roomManager.roomViewer.on("tile-tap", evt => humans[controllingHuman].walkTo(evt.row, evt.column));
-				roomManager.showRoomViewer(heightMaps[Math.floor(Math.random() * heightMaps.length)], new SceneryConfig("default", "default", "default"));
+				roomManager.showRoomViewer(heightMaps[3], new SceneryConfig("default", "default", "default"));
 
 				for (let i = 0; i < generateHumans; i++)
 				{

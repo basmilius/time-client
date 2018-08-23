@@ -290,14 +290,14 @@ export function getTexture(library, promise = false)
 
 	if (!promise)
 	{
-		const texture = LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library].resource);
+		const texture = LOADED_TEXTURES[library] = PIXI.Texture.from("data:image/png;base64," + LOADED_LIBS[library].resource);
 		LOADED_LIBS[library].resource = undefined;
 		return texture;
 	}
 
 	return new Promise(resolve =>
 	{
-		LOADED_TEXTURES[library] = PIXI.Texture.fromImage("data:image/png;base64," + LOADED_LIBS[library].resource);
+		LOADED_TEXTURES[library] = PIXI.Texture.from("data:image/png;base64," + LOADED_LIBS[library].resource);
 		LOADED_LIBS[library].resource = undefined;
 		resolve(LOADED_TEXTURES[library]);
 	});

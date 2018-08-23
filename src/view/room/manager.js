@@ -83,7 +83,7 @@ export class RoomManager extends Manager
 
 			case roomAssets.sprites:
 				this._sprites = file.data;
-				this._sceneryTexture = PIXI.Texture.fromImage(`data:image/png;base64,${this.sprites.resource}`);
+				this._sceneryTexture = PIXI.Texture.from(`data:image/png;base64,${this.sprites.resource}`);
 				this.sprites.resource = undefined;
 				break;
 
