@@ -322,40 +322,40 @@ export class Avatar extends PIXI.Container
 		const clouds = [
 			{
 				sprite: new PIXI.extras.AnimatedSprite([
-					application.getResource(avatarResources.poof["1_1"]).texture,
-					application.getResource(avatarResources.poof["1_2"]).texture,
-					application.getResource(avatarResources.poof["1_3"]).texture,
-					application.getResource(avatarResources.poof["1_4"]).texture
+					PIXI.Texture.from(avatarResources.poof["1_1"]),
+					PIXI.Texture.from(avatarResources.poof["1_2"]),
+					PIXI.Texture.from(avatarResources.poof["1_3"]),
+					PIXI.Texture.from(avatarResources.poof["1_4"])
 				]),
 				x: -4,
 				y: -36
 			},
 			{
 				sprite: new PIXI.extras.AnimatedSprite([
-					application.getResource(avatarResources.poof["2_1"]).texture,
-					application.getResource(avatarResources.poof["2_2"]).texture,
-					application.getResource(avatarResources.poof["2_3"]).texture,
-					application.getResource(avatarResources.poof["2_4"]).texture
+					PIXI.Texture.from(avatarResources.poof["2_1"]),
+					PIXI.Texture.from(avatarResources.poof["2_2"]),
+					PIXI.Texture.from(avatarResources.poof["2_3"]),
+					PIXI.Texture.from(avatarResources.poof["2_4"])
 				]),
 				x: 4,
 				y: 36
 			},
 			{
 				sprite: new PIXI.extras.AnimatedSprite([
-					application.getResource(avatarResources.poof["3_1"]).texture,
-					application.getResource(avatarResources.poof["3_2"]).texture,
-					application.getResource(avatarResources.poof["3_3"]).texture,
-					application.getResource(avatarResources.poof["3_4"]).texture
+					PIXI.Texture.from(avatarResources.poof["3_1"]),
+					PIXI.Texture.from(avatarResources.poof["3_2"]),
+					PIXI.Texture.from(avatarResources.poof["3_3"]),
+					PIXI.Texture.from(avatarResources.poof["3_4"])
 				]),
 				x: -4,
 				y: 16
 			},
 			{
 				sprite: new PIXI.extras.AnimatedSprite([
-					application.getResource(avatarResources.poof["3_1"]).texture,
-					application.getResource(avatarResources.poof["3_2"]).texture,
-					application.getResource(avatarResources.poof["3_3"]).texture,
-					application.getResource(avatarResources.poof["3_4"]).texture
+					PIXI.Texture.from(avatarResources.poof["3_1"]),
+					PIXI.Texture.from(avatarResources.poof["3_2"]),
+					PIXI.Texture.from(avatarResources.poof["3_3"]),
+					PIXI.Texture.from(avatarResources.poof["3_4"])
 				]),
 				x: 4,
 				y: -16

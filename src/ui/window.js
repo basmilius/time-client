@@ -168,9 +168,10 @@ export class Window extends PIXI.Container
 		if (this.title !== "")
 		{
 			contentOffset = 39;
-			this.titleText.x = width / 2;
+			this.titleText.x = width / 2 - this.titleText.width / 2;
+			this.titleText.x -= this.titleText.x % 2;
 			this.titleText.y = 15;
-			this.titleText.anchor.x = 0.5;
+			// this.titleText.anchor.x = 0.5;
 			this.titleText.visible = true;
 
 			let old = this.title;
