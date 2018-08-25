@@ -11,7 +11,7 @@ import { HotelViewManager } from "../view/hotel-view.js";
 import { SceneryConfig } from "../view/room/scenery.js";
 
 let generateFurnis = 0;
-let generateHumans = 10;
+let generateHumans = 1;
 
 let furnis = [];
 let humans = [];
@@ -64,8 +64,8 @@ export function fakeGamePlay()
 					// human.addAction("Wave");
 
 					humans.push(new RoomUser(roomManager.roomViewer, human, position.row, position.column));
-					human.on("pointertap", () => human.figure = randomFigure());
-					human.on("pointertap", () => roomManager.roomViewer.centerEntity(human, true));
+					// human.on("pointertap", () => human.figure = randomFigure());
+					// human.on("pointertap", () => roomManager.roomViewer.centerEntity(human, true));
 
 					roomManager.roomViewer.addEntityToTile(human, position.row, position.column);
 				}

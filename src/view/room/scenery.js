@@ -53,7 +53,7 @@ export class SceneryConfig
 
 	getWallTexture()
 	{
-		return getSceneryTexture("wall_texture_64_3_wall_color_lsd2");
+		return getSceneryTexture("wall_texture_64_3_wall_color_invaders4");
 	}
 
 }

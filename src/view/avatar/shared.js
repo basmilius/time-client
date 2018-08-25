@@ -372,3 +372,29 @@ export function getAnimationOffset(id, geometryId, frame, direction)
 		y: parseInt(bodypart.getAttribute("dy"))
 	};
 }
+
+export function actionComparator(a, b)
+{
+	if (parseInt(a.precedence) < parseInt(b.precedence))
+		return 1;
+
+	if (parseInt(a.precedence) > parseInt(b.precedence))
+		return -1;
+
+	return 0;
+}
+
+export function getOppositeDirection(direction)
+{
+	switch(direction)
+	{
+		case 0: return 0;
+		case 1: return 1;
+		case 2: return 2;
+		case 3: return 3;
+		case 4: return 2;
+		case 5: return 1;
+		case 6: return 0;
+		case 7: return 7;
+	}
+}

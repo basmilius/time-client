@@ -53,6 +53,8 @@ export class AvatarManager extends Manager
 
 		await loadAvatarClothingLibrary("hh_human_body", this.loader);
 		await loadAvatarClothingLibrary("hh_human_face", this.loader);
+		await loadAvatarClothingLibrary("hh_human_item", this.loader);
+		await loadAvatarClothingLibrary("hh_human_shirt", this.loader);
 
 		avatarResources.poof.forEach(image => this.loader.add(image));
 	}
@@ -84,7 +86,9 @@ export class AvatarManager extends Manager
 		{
 			this.lastUpdate = application.ticker.lastTime;
 
-			this.avatars.forEach(avatar => avatar.update());
+			this.avatars
+				.filter(avatar => avatar.needsUpdate)
+				.forEach(avatar => avatar.update());
 		}
 	}
 

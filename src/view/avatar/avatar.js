@@ -1,9 +1,8 @@
 import { application } from "../../bootstrapper.js";
 import { querySelectorAllArray } from "../../core/dom-utils.js";
-import { setInteractive } from "../../core/pixi-utils.js";
 import { FigureString } from "./figure.js";
-import { actionsSorted, defaultAction, getAction, getActivePartSets, getAnimationFrames, getAnimationFramesCount, getAnimationOffset, getDraworder, getFigureData, getFigureMap, getFlippedSetType, getGeometry, getRemoveSetType, getSprite, getValidActionsForPart, isLibraryLoaded, loadAvatarClothingLibrary, loadingAvatar, radiusComparator } from "./shared.js";
 import { AvatarManager, avatarResources } from "./manager.js";
+import { actionComparator, defaultAction, getAction, getActivePartSets, getAnimationFrames, getAnimationFramesCount, getAnimationOffset, getDraworder, getFigureData, getFigureMap, getFlippedSetType, getGeometry, getOppositeDirection, getRemoveSetType, getSprite, getValidActionsForPart, isLibraryLoaded, loadAvatarClothingLibrary, loadingAvatar, radiusComparator } from "./shared.js";
 
 export class Avatar extends PIXI.Container
 {
@@ -30,7 +29,8 @@ export class Avatar extends PIXI.Container
 
 	set direction(value)
 	{
-		this._direction = value;
+		this._direction = value % 8;
+		this.needsUpdate = true;
 	}
 
 	get figure()
@@ -59,6 +59,7 @@ export class Avatar extends PIXI.Container
 	set geometry(value)
 	{
 		this._geometry = value;
+		this.needsUpdate = true;
 	}
 
 	get headDirection()
@@ -68,14 +69,15 @@ export class Avatar extends PIXI.Container
 
 	set headDirection(value)
 	{
-		this._headDirection = value;
+		this._headDirection = value % 8;
+		this.needsUpdate = true;
 	}
 
 	constructor(figure = "hd-195-4", geometry = "vertical", avatarSet = "full")
 	{
 		super();
 
-		setInteractive(this);
+		this.interactive = true;
 
 		this.initialBuild = true;
 		this.canPoof = false;
@@ -87,12 +89,12 @@ export class Avatar extends PIXI.Container
 		this.addChild(this.partContainer);
 
 		this._alsoUpdate = [];
-		this._ticker = false;
 		this._width = 0;
 		this._height = 0;
 
 		this._actions = [defaultAction];
 		this._frames = {};
+		this._intervals = {};
 
 		this.avatarSet = avatarSet;
 		this.direction = 2;
@@ -101,29 +103,81 @@ export class Avatar extends PIXI.Container
 		this.headDirection = this.direction;
 
 		this.build();
+		this.addAction("Default");
+
 		this.canPoof = true;
 		this.initialBuild = false;
+
+		(() =>
+		{
+
+			let canSpin = false;
+
+			setInterval(() => canSpin ? this.direction = this.headDirection = this.direction + 1 : undefined, 100);
+
+			let height = 354;
+			let menu = new PIXI.Graphics();
+			menu.x = 0;
+			menu.y = -height;
+
+			menu.beginFill(0xABCDEF);
+			menu.drawRect(0, 0, 116, height);
+			menu.endFill();
+
+			const make = (txt, x, y, fn) =>
+			{
+				const el = new PIXI.Text(txt, new PIXI.TextStyle({fontSize: 13}));
+				el.x = x;
+				el.y = y;
+				el.interactive = true;
+
+				el.on("pointertap", fn);
+
+				return el;
+			};
+
+			menu.addChild(make("Blow", 6, 6, () => this.hasAction("Blow") ? this.removeAction("Blow") : this.addAction("Blow")));
+			menu.addChild(make("Lay", 6, 24, () => this.hasAction("Lay") ? this.removeAction("Lay") : this.addAction("Lay")));
+			menu.addChild(make("Sit", 6, 42, () => this.hasAction("Sit") ? this.removeAction("Sit") : this.addAction("Sit")));
+			menu.addChild(make("Laugh", 6, 60, () => this.hasAction("Laugh") ? this.removeAction("Laugh") : this.addAction("Laugh")));
+			menu.addChild(make("Respect", 6, 78, () => this.hasAction("Respect") ? this.removeAction("Respect") : this.addAction("Respect")));
+			menu.addChild(make("Sleep", 6, 96, () => this.hasAction("Sleep") ? this.removeAction("Sleep") : this.addAction("Sleep")));
+			menu.addChild(make("Sign", 6, 114, () => this.hasAction("Sign") ? this.removeAction("Sign") : this.addAction("Sign")));
+			menu.addChild(make("Talk", 6, 132, () => this.hasAction("Talk") ? this.removeAction("Talk") : this.addAction("Talk")));
+			menu.addChild(make("Dance", 6, 150, () => this.hasAction("Dance") ? this.removeAction("Dance") : this.addAction("Dance")));
+			menu.addChild(make("Wave", 6, 168, () => this.hasAction("Wave") ? this.removeAction("Wave") : this.addAction("Wave")));
+			menu.addChild(make("Gesture", 6, 186, () => this.hasAction("Gesture") ? this.removeAction("Gesture") : this.addAction("Gesture")));
+			menu.addChild(make("GestureSmile", 6, 204, () => this.hasAction("GestureSmile") ? this.removeAction("GestureSmile") : this.addAction("GestureSmile")));
+			menu.addChild(make("GestureSad", 6, 222, () => this.hasAction("GestureSad") ? this.removeAction("GestureSad") : this.addAction("GestureSad")));
+			menu.addChild(make("GestureAngry", 6, 240, () => this.hasAction("GestureAngry") ? this.removeAction("GestureAngry") : this.addAction("GestureAngry")));
+			menu.addChild(make("GestureSurprised", 6, 258, () => this.hasAction("GestureSurprised") ? this.removeAction("GestureSurprised") : this.addAction("GestureSurprised")));
+			menu.addChild(make("Move", 6, 276, () => this.hasAction("Move") ? this.removeAction("Move") : this.addAction("Move")));
+			menu.addChild(make("Wave", 6, 294, () => this.hasAction("Wave") ? this.removeAction("Wave") : this.addAction("Wave")));
+			menu.addChild(make("Idle", 6, 312, () => this.hasAction("Idle") ? this.removeAction("Idle") : this.addAction("Idle")));
+			menu.addChild(make("Spin", 6, 330, () => canSpin = !canSpin));
+
+			this.addChild(menu);
+
+		})();
 	}
 
 	addAction(action)
 	{
-		for (let a of this._actions)
-			if (a.id === action)
-				return;
+		if (this.hasAction(action))
+			return;
 
 		action = getAction(action);
 
 		if (action === undefined)
 			return;
 
-		this._actions
-			.pushChain(action)
-			.sort((a, b) => actionsSorted.indexOf(b.id) - actionsSorted.indexOf(a.id));
-
+		this._actions.push(action);
 		this._frames[action.id] = 0;
 
-		if (action["preventheadturn"] === "true")
-			this._headDirection = this.direction;
+		if (action.preventheadturn === "true")
+			this.headDirection = this.direction;
+
+		this._intervals[action.id] = setInterval(() => this.needsUpdate = true, 90);
 	}
 
 	hasAction(action)
@@ -142,20 +196,10 @@ export class Avatar extends PIXI.Container
 		if (!this.hasAction(action))
 			return;
 
-		this._actions = this._actions
-			.filter(a => a.id !== action)
-			.sort((a, b) => actionsSorted.indexOf(b.id) - actionsSorted.indexOf(a.id));
-	}
+		this._actions = this._actions.filter(a => a.id !== action);
 
-	setPosition(x, y, dir = 3)
-	{
-		this.x = x;
-		this.y = y;
-
-		this.direction = dir;
-		this.headDirection = dir;
-
-		return this;
+		clearInterval(this._intervals[action.id]);
+		delete this._intervals[action.id];
 	}
 
 	build()
@@ -180,6 +224,7 @@ export class Avatar extends PIXI.Container
 				if (libraries.length === 0)
 				{
 					this._loading = false;
+					this.needsUpdate = true;
 					return;
 				}
 
@@ -209,9 +254,21 @@ export class Avatar extends PIXI.Container
 		let activePartSets = [];
 
 		if (action === null)
+		{
 			activePartSets.push(...getActivePartSets("figure"));
+		}
 		else
-			activePartSets.push(...getActivePartSets(action["activepartset"]));
+		{
+			if (action["activepartset"] === "handRightAndHead")
+			{
+				activePartSets.push(...getActivePartSets("handRight"));
+				activePartSets.push(...getActivePartSets("head"));
+			}
+			else
+			{
+				activePartSets.push(...getActivePartSets(action["activepartset"]));
+			}
+		}
 
 		return activePartSets.unique();
 	}
@@ -243,14 +300,19 @@ export class Avatar extends PIXI.Container
 		{
 			settype.parts.forEach(part =>
 			{
-				let lib = getFigureMap().querySelector(`part[id="${part.id}"][type="${type}"]`);
+				let typeProcessed = type === "hrb" ? "hr" : type;
+				let lib = getFigureMap().querySelector(`part[id="${part.id}"][type="${typeProcessed}"]`);
 
 				if (lib === null || lib.parentNode === null)
 					return;
 
 				lib = lib.parentNode;
+				part.library = lib.getAttribute("id").toLowerCase();
 
-				libraries.push(part["library"] = lib.getAttribute("id").toLowerCase());
+				if (part.library === undefined && (type === "ls" || type === "rs" || type === "lc" || type === "rc"))
+					part.library = "hh_human_shirt";
+
+				libraries.push(part.library);
 			});
 		});
 
@@ -297,7 +359,7 @@ export class Avatar extends PIXI.Container
 					colorable: part.getAttribute("colorable") === "1" && colorable,
 					colorindex: parseInt(part.getAttribute("colorindex")),
 					index: parseInt(part.getAttribute("index")),
-					paletteid,
+					paletteid: paletteid,
 					set: type,
 					type: partType
 				});
@@ -386,14 +448,14 @@ export class Avatar extends PIXI.Container
 	render()
 	{
 		this.partContainer.cacheAsBitmap = false;
-		this.alpha = this._loading ? 0.8 : 1.0;
+		this.alpha = this._loading ? 0.6 : 1.0;
 
 		let draworderId = "std";
 
 		if (this.hasActivePartSet("handLeft"))
-			draworderId = this.direction > 3 && this.direction < 7 ? "rh-up" : "lh-up";
+			draworderId = "lh-up";
 		else if (this.hasActivePartSet("handRightAndHead"))
-			draworderId = this.direction > 3 && this.direction < 7 ? "lh-up" : "rh-up";
+			draworderId = "rh-up";
 
 		let draworder = querySelectorAllArray(`action[id="${draworderId}"] direction[id="${this.direction}"] partList part`, getDraworder()).map(part => part.getAttribute("set-type"));
 
@@ -415,15 +477,17 @@ export class Avatar extends PIXI.Container
 		if (!this.needsUpdate)
 			return;
 
-		this.actions.forEach(action => this.updateAction(action));
+		this.actions.sort(actionComparator).forEach(action => this.updateAction(action));
 		this.render();
+
+		this.needsUpdate = false;
 	}
 
 	updateAction(action = null)
 	{
 		const center = {
-			x: this._width / 2,
-			y: this._height / 2
+			x: Math.floor(this._width / 2),
+			y: Math.floor(this._height / 2)
 		};
 
 		if (action === null)
@@ -452,39 +516,34 @@ export class Avatar extends PIXI.Container
 			{
 				let partDirection = bodypart === "head" ? this.headDirection : this.direction;
 				let partType = item.getAttribute("id");
+				let partTypeFlipped = getFlippedSetType(partType);
 				let partDirectionWithoutFlip = partDirection;
-				let partTypeWithoutFlip = partType;
 				let partSwapped = false;
 				let removeSetType = getRemoveSetType(partType);
+				let shouldCheckFlip = partType !== partTypeFlipped && partDirection > 3 && partDirection < 7;
 
 				if (removeSetType !== null)
 					hiddenlayers.push(removeSetType);
 
-				if (partDirection > 3 && partDirection < 7)
-				{
-					partSwapped = true;
-					partType = getFlippedSetType(partType);
-				}
-
 				let partValidActions = getValidActionsForPart(partType);
 				let partFrames = getAnimationFrames(action.id, partType);
 
-				if (activePartSets.indexOf(partTypeWithoutFlip) === -1)
+				if (activePartSets.indexOf(partType) === -1)
 					continue;
-
-				if (this._sprites[partTypeWithoutFlip] === undefined)
-					this._sprites[partTypeWithoutFlip] = {};
 
 				if (hiddenlayers.indexOf(partType) > -1)
 					continue;
 
-				if (avatarParts[partTypeWithoutFlip] === undefined)
+				if (avatarParts[partType] === undefined)
 					continue;
 
-				for (const part of avatarParts[partTypeWithoutFlip].parts)
+				for (const part of avatarParts[partType].parts)
 				{
 					if (this._loading && part.library !== "hh_human_body")
-						break; // Other parts are probably from another library.
+						continue;
+
+					if (part.library === undefined)
+						continue; // Brainfart?
 
 					let offset = {
 						x: parseInt(partset.getAttribute("x")),
@@ -502,38 +561,55 @@ export class Avatar extends PIXI.Container
 					partFrame = partFrames && partFrames[partFrame] ? partFrames[partFrame].number : 0;
 
 					let animationOffset = getAnimationOffset(action.id, bodypart, frame % getAnimationFramesCount(action.id), partDirection);
-					let generateAssetName = () => `h_${partAction}_${partType}_${part.id}_${partDirection}_${partFrame}`;
-					let sprite = getSprite(part.library, generateAssetName(), center);
+					let generateAssetName = (pa, pt, pi, pd, pf) => `h_${pa}_${pt}_${pi}_${pd}_${pf}`;
+					let partDirectionOpposite = getOppositeDirection(partDirectionWithoutFlip);
+					let sprite = null;
 
-					if (sprite === null)
+					let onPartSwapped = () => partSwapped = true;
+					let onPartFlipped = () => partFlipped = partDirectionWithoutFlip > 3 && partDirectionWithoutFlip < 7;
+					let onPartFlippedAndSwapped = () =>
 					{
-						let opf = partFrame;
-						partFrame = 0;
-						sprite = getSprite(part.library, generateAssetName(), center);
-						partFrame = opf;
+						onPartSwapped();
+						onPartFlipped()
+					};
+
+					let test = [
+						[generateAssetName(partAction, partType, part.id, partDirection, partFrame)],
+						[generateAssetName(partAction, partType, part.id, partDirection, 0)],
+						[generateAssetName(partAction, partType, part.id, partDirectionOpposite, partFrame), onPartFlipped],
+						[generateAssetName(partAction, partType, part.id, partDirectionOpposite, 0), onPartFlipped],
+						[generateAssetName("std", partType, part.id, partDirectionOpposite, partFrame)]
+					];
+
+					if (shouldCheckFlip)
+					{
+						test.unshift(
+							[generateAssetName(partAction, partTypeFlipped, part.id, partDirection, partFrame), onPartSwapped],
+							[generateAssetName(partAction, partTypeFlipped, part.id, partDirection, 0), onPartSwapped],
+							[generateAssetName(partAction, partTypeFlipped, part.id, partDirectionOpposite, partFrame), onPartFlippedAndSwapped],
+							[generateAssetName(partAction, partTypeFlipped, part.id, partDirectionOpposite, 0), onPartFlippedAndSwapped]
+						);
+					}
+
+					while (sprite === null && test.length > 0)
+					{
+						let n = test.shift();
+						sprite = getSprite(part.library, n[0], center);
+
+						partFlipped = false;
+						partSwapped = false;
+
+						if (sprite === null || n[1] === undefined)
+							continue;
+
+						n[1]();
+						break;
 					}
 
 					if (sprite === null)
 					{
-						partDirection = 6 - partDirection;
-						partFlipped = partDirectionWithoutFlip > 3 && partDirectionWithoutFlip < 7;
-						sprite = getSprite(part.library, generateAssetName(), center);
-					}
-
-					if (sprite === null)
-					{
-						let opa = partAction;
-						partAction = "std";
-						sprite = getSprite(part.library, generateAssetName(), center);
-						partAction = opa;
-					}
-
-					if (sprite === null)
-					{
-						// if (partType !== "ey" && partType !== "fc")
-						// 	Logger.debug("Sprite not found!", generateAssetName(), part.library, partType);
-
-						break; // Don't draw incomplete pieces.
+						delete this._sprites[partType];
+						break;
 					}
 
 					if (!partSwapped)
@@ -550,7 +626,8 @@ export class Avatar extends PIXI.Container
 					if (partFlipped)
 					{
 						sprite.scale.x = -1;
-						sprite.x = (((this._width - sprite.width) - sprite.x) + sprite.width) + animationOffset.x;
+
+						sprite.x = this._width + -sprite.x - animationOffset.x;
 					}
 
 					sprite.x = Math.floor(sprite.x);
@@ -566,10 +643,13 @@ export class Avatar extends PIXI.Container
 							sprite.tint = parseInt(`0x${fdColor.textContent}`);
 					}
 
-					if (this._sprites[partTypeWithoutFlip][part.index] !== undefined)
-						this._sprites[partTypeWithoutFlip][part.index].destroy(false);
+					if (part.index === 0)
+						this._sprites[partType] = {};
 
-					this._sprites[partTypeWithoutFlip][part.index] = sprite;
+					if (this._sprites[partType][part.index] !== undefined)
+						this._sprites[partType][part.index].destroy(false);
+
+					this._sprites[partType][part.index] = sprite;
 				}
 			}
 		}
