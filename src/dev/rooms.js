@@ -22,7 +22,7 @@ heightMaps.push(`
 xxxxxxxxxxxxxxxxxxx
 xxxxxxxxxxx22222222
 xxxxxxxxxxx22222222
-xxxxxxxxxxx22222222
+xxxxxxxxxx222222222
 xxxxxxxxxxx22222222
 xxxxxxxxxxx22222222
 xxxxxxxxxxx22222222

@@ -1,11 +1,11 @@
-import { advancedDraggable, withInstance } from "../../core/pixi-utils.js";
 import { application } from "../../bootstrapper.js";
+import { advancedDraggable, withInstance } from "../../core/pixi-utils.js";
+import { Easings } from "../../ui/ui.js";
 import { TileCursor } from "./cursor.js";
-import { getDoorDirection, getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, isDoor, needsWallColumn, needsWallRow, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
+import { SceneryConfig } from "./scenery.js";
+import { getDoorDirection, getHighestAndLowest, getStairsType, getTileHeightIndex, getTileImplementation, isDoor, isValid, needsWall, needsWallBoth, needsWallColumn, needsWallRow, rotateFloorplan, tileHeight, tileHeightHalf, tileWidthHalf } from "./shared.js";
 import { Tile } from "./tiles.js";
 import { WallColumn, WallCorner, WallRow } from "./walls.js";
-import { Easings } from "../../ui/ui.js";
-import { SceneryConfig } from "./scenery.js";
 
 const buildWalls = true;
 const enableScenery = true;
@@ -97,11 +97,7 @@ export class RoomView extends PIXI.Graphics
 
 	clearEverything()
 	{
-		while (this.tileSprites.children[0])
-			this.tileSprites.removeChild(this.tileSprites.children[0]);
-
-		while (this.wallSprites.children[0])
-			this.wallSprites.removeChild(this.wallSprites.children[0]);
+		this.clearFloorplan();
 
 		while (this.root.children[0])
 			this.root.removeChild(this.root.children[0]);
@@ -111,24 +107,39 @@ export class RoomView extends PIXI.Graphics
 		this.root.addChild(this.tileCursor);
 
 		this._entities = [];
+	}
+
+	clearFloorplan()
+	{
+		while (this.tileSprites.children[0])
+			this.tileSprites.removeChild(this.tileSprites.children[0]);
+
+		while (this.wallSprites.children[0])
+			this.wallSprites.removeChild(this.wallSprites.children[0]);
+
 		this._tiles = {};
 	}
 
-	prepareHeightmap(floorplan, sceneryConfig = undefined)
+	prepareHeightmap(floorplan, sceneryConfig = undefined, clear = true)
 	{
 		this.emit("room-view-emptied");
 
-		this.clearEverything();
+		let rotation = 0;
+
+		if (clear)
+			this.clearEverything();
+		else
+			this.clearFloorplan();
 
 		if (!enableScenery)
 			sceneryConfig = undefined;
 		else if (sceneryConfig === undefined)
 			sceneryConfig = new SceneryConfig("default", "default", "default");
 
-		const tiles = this._heightmap = floorplan
+		const tiles = this._heightmap = rotateFloorplan(rotation, floorplan
 			.trim()
 			.split("\n")
-			.map(row => row.split("").map(char => getTileHeightIndex(char)));
+			.map(row => row.split("").map(char => getTileHeightIndex(char))));
 
 		const {highest, lowest} = getHighestAndLowest(this.heightmap);
 		this.highest = highest;
@@ -157,9 +168,16 @@ export class RoomView extends PIXI.Graphics
 				let stairsType = getStairsType(tiles, row, column);
 				let implementation = getTileImplementation(stairsType);
 
+				let wallB = needsWallBoth(tiles, row, column);
 				let wallC = needsWallColumn(tiles, row, column);
 				let wallR = needsWallRow(tiles, row, column);
-				let wall = wallC || wallR;
+				let wall = wallB[0] || wallB[1] || wallC || wallR;
+
+				if (wallB[0])
+					wallR = true;
+
+				if (wallB[1])
+					wallC = true;
 
 				let x = this.getX(row, column);
 				let y = this.getY(row, column);
@@ -182,16 +200,16 @@ export class RoomView extends PIXI.Graphics
 					if (wallC && wallR)
 					{
 						wallImplementations.push(new WallCorner(this.floorThickness, this.wallThickness, top, sceneryConfig));
-						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, !needsWallColumn(tiles, row, column + 1), sceneryConfig));
-						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, !needsWallRow(tiles, row + 1, column), sceneryConfig));
+						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, !needsWall(tiles, row, column + 1), wallB[0] || wallB[1], sceneryConfig));
+						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, !needsWall(tiles, row + 1, column), wallB[0] || wallB[1], sceneryConfig));
 					}
 					else if (wallC)
 					{
-						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, !needsWallColumn(tiles, row, column + 1), sceneryConfig));
+						wallImplementations.push(new WallColumn(this.floorThickness, this.wallThickness, top, isDoorColumn, !needsWall(tiles, row, column + 1), wallB[0] || wallB[1], sceneryConfig));
 					}
 					else if (wallR)
 					{
-						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, !needsWallRow(tiles, row + 1, column), sceneryConfig));
+						wallImplementations.push(new WallRow(this.floorThickness, this.wallThickness, top, isDoorRow, !needsWall(tiles, row + 1, column), wallB[0] || wallB[1], sceneryConfig));
 					}
 
 					for (const wi of wallImplementations)
@@ -409,10 +427,13 @@ export class RoomView extends PIXI.Graphics
 
 	getZ(row, column, add = 0)
 	{
+		if (!isValid(this.tiles, row, column))
+			return -10;
+
 		if (isDoor(this.tiles, row, column))
 			return (11 + add);
 
-		return (row * this.columns) + column + add;
+		return 20 + (row * this.columns) + column + add;
 	}
 
 	isValidTile(row, column)
@@ -434,6 +455,8 @@ export class RoomView extends PIXI.Graphics
 			this.currentHover = [evt.row, evt.column];
 			this.tileCursor.visible = true;
 			this.tileCursor.hover(x, y, 11);
+
+			console.log(evt.row, evt.column);
 		}, 1);
 	}
 

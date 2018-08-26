@@ -122,7 +122,39 @@ export function isDoor(tiles, row, column)
 
 export function isValid(tiles, row, column)
 {
-	return tiles[row][column] !== null;
+	return tiles[row] && tiles[row][column] && tiles[row][column] !== null;
+}
+
+export function needsWall(tiles, row, column)
+{
+	return isValid(tiles, row, column) && (needsWallBoth(tiles, row, column) || needsWallColumn(tiles, row, column) || needsWallRow(tiles, row, column));
+}
+
+export function needsWallBoth(tiles, row, column)
+{
+	const checkColumn = () =>
+	{
+		if (!needsWallColumn(tiles, row, column - 1))
+			return false;
+
+		if (!needsWallRow(tiles, row - 2, column + 1))
+			return false;
+
+		return true;
+	};
+
+	const checkRow = () =>
+	{
+		if (!needsWallRow(tiles, row - 1, column))
+			return false;
+
+		if (!needsWallColumn(tiles, row + 1, column - 2))
+			return false;
+
+		return true;
+	};
+
+	return [checkRow(), checkColumn()];
 }
 
 export function needsWallColumn(tiles, row, column)
@@ -172,4 +204,29 @@ export function getHighestAndLowest(heightmap)
 	}
 
 	return {highest, lowest};
+}
+
+export function rotateFloorplan(rotation, floorplan)
+{
+	if (floorplan.length === 0)
+		return floorplan;
+
+	switch (rotation)
+	{
+		case 2:
+		case 6:
+			let newFloorplan = [];
+
+			for (let i = 0; i < floorplan[0].length; i++)
+				newFloorplan.push([]);
+
+			for (let row = 0; row < floorplan.length; row++)
+				for (let column = 0; column < floorplan[row].length; column++)
+					newFloorplan[column][row] = floorplan[row][column];
+
+			return newFloorplan;
+
+		default:
+			return floorplan;
+	}
 }
