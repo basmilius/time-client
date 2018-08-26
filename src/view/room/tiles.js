@@ -1,6 +1,6 @@
 import { tileHeight, tileWidth } from "./shared.js";
 
-function drawTile(g, points, thickness)
+function drawTile(g, points, thickness, sceneryConfig)
 {
 	g.beginFill(0x989865);
 	g.lineStyle(.5, 0x838357);
@@ -9,6 +9,37 @@ function drawTile(g, points, thickness)
 	g.lineTo(points[2].x, points[2].y);
 	g.lineTo(points[3].x, points[3].y);
 	g.endFill();
+
+	// if (sceneryConfig !== null)
+	// {
+	// 	const sprite = new PIXI.extras.TilingSprite(sceneryConfig.getFloorTexture());
+	// 	sprite.x = 0;
+	// 	sprite.y = 0;
+	// 	sprite.scale.y = 0.86062;
+	// 	sprite.tilePosition.x = tileWidthHalf * 0.25;
+	// 	sprite.tileTransform.skew.x = -0.523598776;
+	// 	sprite.tileTransform.pivot.set(sprite.width / 2, sprite.height / 2);
+	// 	sprite.tileTransform.rotation = 0.523598776;
+	// 	sprite.blendMode = PIXI.BLEND_MODES.MULTIPLY;
+	// 	sprite.mask = withInstance(new PIXI.Graphics(), x =>
+	// 	{
+	// 		x.x = 0;
+	// 		x.y = 0;
+	//
+	// 		x.beginFill(0x989865);
+	// 		x.lineStyle(.5, 0x838357);
+	// 		x.moveTo(points[0].x, points[0].y);
+	// 		x.lineTo(points[1].x, points[1].y);
+	// 		x.lineTo(points[2].x, points[2].y);
+	// 		x.lineTo(points[3].x, points[3].y);
+	// 		x.endFill();
+	//
+	// 		x.cacheAsBitmap = true;
+	// 		g.addChild(x);
+	// 	});
+	//
+	// 	g.addChild(sprite);
+	// }
 
 	if (thickness > 0)
 	{
@@ -38,7 +69,7 @@ export class TileBase extends PIXI.Graphics
 		this.row = 0;
 		this.column = 0;
 
-		this.cacheAsBitmap = true;
+		this.cacheAsBitmap = false;
 		this.interactive = true;
 		this.thickness = thickness;
 
@@ -103,7 +134,7 @@ export class StairsSouth extends TileBase
 export class StairsSouthEast extends TileBase
 {
 
-	constructor(thickness)
+	constructor(thickness, sceneryConfig)
 	{
 		super(thickness);
 
@@ -119,7 +150,7 @@ export class StairsSouthEast extends TileBase
 				new PIXI.Point(ax, (tileHeight / 2) + ay)
 			];
 
-			drawTile(this, points, this.thickness);
+			drawTile(this, points, this.thickness, sceneryConfig);
 		}
 	}
 
@@ -128,7 +159,7 @@ export class StairsSouthEast extends TileBase
 export class StairsSouthWest extends TileBase
 {
 
-	constructor(thickness)
+	constructor(thickness, sceneryConfig)
 	{
 		super(thickness);
 
@@ -144,7 +175,7 @@ export class StairsSouthWest extends TileBase
 				new PIXI.Point((tileWidth / 2) - (tileWidth / 8) + ax, (tileHeight / 8) + ay)
 			];
 
-			drawTile(this, points, this.thickness);
+			drawTile(this, points, this.thickness, sceneryConfig);
 		}
 	}
 
@@ -153,7 +184,7 @@ export class StairsSouthWest extends TileBase
 export class Tile extends TileBase
 {
 
-	constructor(thickness)
+	constructor(thickness, sceneryConfig)
 	{
 		super(thickness);
 
@@ -164,7 +195,7 @@ export class Tile extends TileBase
 			new PIXI.Point(0, tileHeight / 2)
 		];
 
-		drawTile(this, points, this.thickness);
+		drawTile(this, points, this.thickness, sceneryConfig);
 	}
 
 }

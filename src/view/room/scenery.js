@@ -43,7 +43,7 @@ export class SceneryConfig
 
 	getFloorTexture()
 	{
-		return undefined;
+		return getSceneryTexture("floor_texture_64_0_floor_basic");
 	}
 
 	getLandscapeTexture()

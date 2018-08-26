@@ -30,8 +30,8 @@ export class RoomView extends PIXI.Graphics
 
 	set roomScale(value)
 	{
-		this.scale.x = value;
-		this.scale.y = value;
+		this.root.scale.x = value;
+		this.root.scale.y = value;
 	}
 
 	get tiles()
@@ -62,11 +62,11 @@ export class RoomView extends PIXI.Graphics
 
 		this.offsets = {x: 0, y: 0};
 
-		this.roomScale = 1;
 		this.tileCursor = new TileCursor();
 		this.tileCursor.visible = false;
 
 		this.root = new PIXI.Container();
+		this.roomScale = 3;
 
 		this.tileSprites = new PIXI.Container();
 		this.tileSprites.z = 10;
@@ -222,7 +222,7 @@ export class RoomView extends PIXI.Graphics
 					}
 				}
 
-				this.tileSprites.addChild(withInstance(new implementation(this.floorThickness, sceneryConfig), tile =>
+				this.tileSprites.addChild(withInstance(new implementation(this.floorThickness, column === 1 ? sceneryConfig : null), tile =>
 				{
 					this._tiles[row][column] = tile;
 
