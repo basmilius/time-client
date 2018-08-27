@@ -83,6 +83,7 @@ export class BottomBarButtonMe extends PIXI.Graphics
 		super();
 
 		this.avatar = application.getManager(AvatarManager).newAvatar(figure, "vertical", "head");
+		this.avatar.interactive = false;
 		this.addChild(this.avatar);
 
 		this.avatar.canPoof = false;

@@ -66,7 +66,7 @@ export class RoomView extends PIXI.Graphics
 		this.tileCursor.visible = false;
 
 		this.root = new PIXI.Container();
-		this.roomScale = 3;
+		this.roomScale = 1;
 
 		this.tileSprites = new PIXI.Container();
 		this.tileSprites.z = 10;
@@ -455,8 +455,6 @@ export class RoomView extends PIXI.Graphics
 			this.currentHover = [evt.row, evt.column];
 			this.tileCursor.visible = true;
 			this.tileCursor.hover(x, y, 11);
-
-			console.log(evt.row, evt.column);
 		}, 1);
 	}
 

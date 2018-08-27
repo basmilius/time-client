@@ -78,14 +78,14 @@ export class Avatar extends PIXI.Container
 		super();
 
 		this.interactive = true;
-
 		this.initialBuild = true;
 		this.canPoof = false;
 		this.id = "avatar-" + window.performance.now();
 		this.loader = new PIXI.loaders.Loader();
 		this.needsUpdate = false;
-		this.partContainer = new PIXI.Container();
 
+		this.partContainer = new PIXI.Graphics();
+		this.partContainer.interactive = false;
 		this.addChild(this.partContainer);
 
 		this._alsoUpdate = [];
@@ -200,6 +200,23 @@ export class Avatar extends PIXI.Container
 
 		clearInterval(this._intervals[action.id]);
 		delete this._intervals[action.id];
+	}
+
+	containsPoint(p)
+	{
+		if (!this.interactive)
+			return false;
+
+		let x = Math.floor(p.x - this.partContainer.worldTransform.tx);
+		let y = Math.floor(p.y - this.partContainer.worldTransform.ty);
+
+		if (x < 0 || y < 0 || x > this.partContainer.width || y > this.partContainer.height)
+			return false;
+
+		const pixels = application.display.renderer.plugins.extract.pixels(this.partContainer);
+		const px = (x * 4) + (y * (this.partContainer.width * 4));
+
+		return pixels[px + 3] > 0;
 	}
 
 	build()
@@ -469,7 +486,7 @@ export class Avatar extends PIXI.Container
 			if (this._sprites[type] !== undefined)
 				this._sprites[type].forEach(part => this.partContainer.addChild(part));
 
-		this.partContainer.cacheAsBitmap = true;
+		// this.partContainer.cacheAsBitmap = true;
 	}
 
 	update()
@@ -477,10 +494,10 @@ export class Avatar extends PIXI.Container
 		if (!this.needsUpdate)
 			return;
 
+		this.needsUpdate = false;
+
 		this.actions.sort(actionComparator).forEach(action => this.updateAction(action));
 		this.render();
-
-		this.needsUpdate = false;
 	}
 
 	updateAction(action = null)
