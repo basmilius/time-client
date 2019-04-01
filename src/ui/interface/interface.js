@@ -1,4 +1,4 @@
-import { BottomBar, bottomBarHeight } from "./bottombar.js";
+import { BottomBar, bottomBarHeight } from "./bottomBar.js";
 import { Easings } from "../ui.js";
 
 export const interfaceResources = {
