@@ -1,7 +1,7 @@
 import { application } from "../bootstrapper.js";
 import { I18nManager } from "../core/i18n/i18n.js";
 
-const resourceLogo = "/resource/image/logo.png";
+const resourceLogo = "resource/image/logo.png";
 
 class LoadingBar extends PIXI.Graphics
 {
